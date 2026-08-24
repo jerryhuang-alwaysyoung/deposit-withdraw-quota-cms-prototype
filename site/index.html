@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XREX CMS Prototype — [Admin] Deposit Withdraw Quota Management (KGI only)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
+    background: #f0f2f5;
+    color: #262626;
+    font-size: 13px;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 220px; flex: 0 0 220px; background: #fff;
+    border-right: 1px solid #f0f0f0; height: 100vh;
+    position: sticky; top: 0; overflow-y: auto;
+  }
+  .sidebar-brand { padding: 18px 16px; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+  .nav-group {
+    padding: 9px 16px; color: #262626; cursor: default;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .nav-group .chev { color: #bfbfbf; font-size: 10px; }
+  .nav-child {
+    padding: 8px 16px 8px 28px; color: #595959; cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+  .nav-child:hover { background: #fafafa; }
+  .nav-child.active {
+    background: #e6f4ff; color: #1677ff;
+    border-left-color: #1677ff; font-weight: 500;
+  }
+
+  /* ---------- Main ---------- */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar {
+    height: 44px; background: #fff; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 14px; padding: 0 18px; font-size: 12px; color: #8c8c8c;
+  }
+  .perm-switch {
+    display: flex; align-items: center; gap: 6px;
+    background: #fafafa; border: 1px solid #f0f0f0; border-radius: 6px; padding: 3px 8px;
+  }
+  .perm-switch label { color: #595959; cursor: pointer; }
+  .avatar {
+    width: 24px; height: 24px; border-radius: 50%; background: #1677ff; color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+  }
+
+  .content { padding: 16px 20px 40px; }
+  .breadcrumb { color: #8c8c8c; font-size: 12px; margin-bottom: 6px; }
+  .page-head { display: flex; align-items: center; justify-content: space-between; }
+  .page-title { font-size: 19px; font-weight: 600; }
+  .icon-btn {
+    background: none; border: none; cursor: pointer;
+    color: #595959; padding: 4px; line-height: 0; border-radius: 4px;
+  }
+  .icon-btn:hover { color: #1677ff; background: #f5f5f5; }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 24px; border-bottom: 1px solid #f0f0f0; margin: 14px 0 0; }
+  .tab {
+    padding: 9px 0; cursor: pointer; color: #595959;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tab.active { color: #1677ff; border-bottom-color: #1677ff; font-weight: 500; }
+
+  /* ---------- Quota reference panel ---------- */
+  .ref {
+    background: #fff; border: 1px solid #bae0ff; border-left: 3px solid #1677ff;
+    border-radius: 8px; margin-top: 14px;
+  }
+  .ref-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 16px; cursor: pointer; user-select: none;
+  }
+  .ref-head b { font-size: 13px; }
+  .ref-head .toggle { margin-left: auto; color: #1677ff; font-size: 12px; }
+  .ref-body { padding: 0 16px 16px; display: block; }
+  .ref-body.collapsed { display: none; }
+  .cap-list { display: flex; flex-direction: column; gap: 9px; }
+  .cap-row { display: flex; align-items: flex-start; gap: 12px; }
+  .cap-cur {
+    flex: 0 0 46px; font-weight: 600; font-size: 12px; color: #1677ff;
+    background: #e6f4ff; border-radius: 4px; text-align: center; padding: 2px 0; margin-top: 1px;
+  }
+  .cap-vals { font-size: 12.5px; color: #262626; line-height: 1.9; }
+  .cap-vals b { color: #595959; font-weight: 600; margin-right: 2px; }
+
+  /* ---------- Panel / filters ---------- */
+  .panel { background: #fff; border-radius: 8px; margin-top: 14px; }
+  .filters {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 14px 16px; border-bottom: 1px solid #f5f5f5;
+  }
+  .filters .grow { margin-left: auto; }
+  .fl { display: flex; align-items: center; gap: 7px; color: #595959; }
+  input[type=text], select {
+    height: 30px; border: 1px solid #d9d9d9; border-radius: 6px;
+    padding: 0 9px; font-size: 13px; color: #262626; background: #fff;
+    min-width: 140px; font-family: inherit;
+  }
+  input[type=text]:focus, select:focus { outline: none; border-color: #1677ff; }
+  .btn {
+    height: 30px; padding: 0 15px; border-radius: 6px; font-size: 13px;
+    cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #262626;
+    font-family: inherit;
+  }
+  .btn:hover { border-color: #1677ff; color: #1677ff; }
+  .btn-primary { background: #1677ff; border-color: #1677ff; color: #fff; }
+  .btn-primary:hover { background: #4096ff; border-color: #4096ff; color: #fff; }
+  .btn[disabled] { cursor: not-allowed; border-color: #d9d9d9; color: #bfbfbf; background: #f5f5f5; }
+  .btn[disabled]:hover { border-color: #d9d9d9; color: #bfbfbf; }
+  .btn-sm { height: 26px; padding: 0 10px; font-size: 12px; }
+  .btn-danger { border-color: #ffa39e; color: #ff4d4f; }
+  .btn-danger:hover { border-color: #ff4d4f; color: #ff4d4f; }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: max-content; min-width: 100%; }
+  th {
+    background: #fafafa; text-align: left; font-weight: 500; color: #262626;
+    padding: 11px 12px; border-bottom: 1px solid #f0f0f0; white-space: nowrap;
+    font-size: 12.5px; vertical-align: bottom;
+  }
+  td {
+    padding: 11px 12px; border-bottom: 1px solid #f5f5f5;
+    white-space: nowrap; color: #262626; vertical-align: top;
+  }
+  tbody tr:hover td { background: #fafafa; }
+  .uid { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #262626; }
+  .muted { color: #bfbfbf; }
+  .ts { color: #595959; line-height: 1.45; }
+  .ts small { display: block; color: #8c8c8c; }
+  .col-new { background: #f0f7ff; }
+  th.col-new { background: #e6f4ff; }
+  .tag {
+    display: inline-block; padding: 1px 8px; border-radius: 10px;
+    font-size: 11.5px; line-height: 18px; border: 1px solid; white-space: nowrap;
+  }
+  .tag-activate { background: #f6ffed; color: #389e0d; border-color: #b7eb8f; }
+  .tag-deleted  { background: #f5f5f5; color: #8c8c8c; border-color: #d9d9d9; }
+  .tag-pending  { background: #fffbe6; color: #d48806; border-color: #ffe58f; }
+  .tag-failed   { background: #fff1f0; color: #cf1322; border-color: #ffa39e; }
+  .tag-new      { background: #1677ff; color: #fff; border-color: #1677ff; font-size: 10px; padding: 0 5px; margin-left: 6px; vertical-align: middle; }
+  .tag-hold     { background: #f5f5f5; color: #8c8c8c; border-color: #d9d9d9; font-size: 10.5px; }
+  .fail-reason  { display: block; color: #cf1322; font-size: 11px; margin-top: 4px; white-space: normal; max-width: 190px; line-height: 1.45; }
+  .actions { display: flex; gap: 6px; }
+  .empty { padding: 48px; text-align: center; color: #bfbfbf; }
+  .pager { display: flex; justify-content: flex-end; padding: 12px 16px; gap: 6px; }
+  .pager span {
+    min-width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid #d9d9d9; border-radius: 5px; font-size: 12px; color: #595959;
+  }
+  .pager span.on { border-color: #1677ff; color: #1677ff; }
+
+  /* ---------- Modal ---------- */
+  .mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: none; align-items: flex-start; justify-content: center; z-index: 50;
+    overflow-y: auto; padding: 60px 0;
+  }
+  .mask.open { display: flex; }
+  .modal { background: #fff; border-radius: 8px; width: 460px; padding: 22px 24px 18px; }
+  .modal h3 { font-size: 15px; margin-bottom: 16px; }
+  .field { margin-bottom: 13px; }
+  .field label { display: block; margin-bottom: 5px; color: #262626; }
+  .req::before { content: "*"; color: #ff4d4f; margin-right: 4px; }
+  .field input, .field select { width: 100%; }
+  .field .cap { display: block; color: #8c8c8c; font-size: 11.5px; margin-top: 4px; }
+  .field .err { display: none; color: #cf1322; font-size: 11.5px; margin-top: 4px; line-height: 1.5; }
+  .field .err.on { display: block; }
+  .field input.invalid, .field select.invalid { border-color: #ff4d4f; }
+  .form-error {
+    display: none; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px;
+    padding: 9px 11px; color: #cf1322; font-size: 12px; line-height: 1.6; margin-top: 14px;
+  }
+  .form-error.on { display: block; }
+  .toast {
+    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+    background: #f6ffed; border: 1px solid #b7eb8f; color: #389e0d;
+    padding: 9px 16px; border-radius: 6px; font-size: 13px; z-index: 90;
+    box-shadow: 0 4px 14px rgba(0,0,0,.08); display: none;
+  }
+  .toast.on { display: block; }
+  tr.row-new td { animation: flash 1.6s ease; }
+  @keyframes flash { 0%,45% { background: #e6f4ff; } 100% { background: transparent; } }
+  .hint {
+    background: #f0f7ff; border: 1px solid #bae0ff; border-radius: 6px;
+    padding: 9px 11px; color: #595959; font-size: 12px; line-height: 1.6; margin-bottom: 14px;
+  }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+  /* ---------- Drawer ---------- */
+  .drawer-mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; z-index: 60; }
+  .drawer-mask.open { display: block; }
+  .drawer {
+    position: fixed; top: 0; right: -560px; width: 560px; height: 100vh;
+    background: #fff; z-index: 61; transition: right .22s ease;
+    display: flex; flex-direction: column;
+  }
+  .drawer.open { right: 0; }
+  .drawer-head {
+    padding: 15px 20px; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .drawer-head h3 { font-size: 15px; font-weight: 600; }
+  .drawer-body { padding: 18px 20px 40px; overflow-y: auto; flex: 1; }
+  .close-x { background: none; border: none; font-size: 17px; color: #8c8c8c; cursor: pointer; line-height: 1; }
+  .close-x:hover { color: #262626; }
+
+  .log-scope { color: #8c8c8c; font-size: 12px; margin-bottom: 16px; }
+  .timeline { border-left: 2px solid #f0f0f0; margin-left: 5px; padding-left: 18px; }
+  .log-item { position: relative; padding-bottom: 22px; }
+  .log-item::before {
+    content: ""; position: absolute; left: -24px; top: 4px;
+    width: 9px; height: 9px; border-radius: 50%; background: #1677ff;
+    border: 2px solid #fff; box-shadow: 0 0 0 2px #e6f4ff;
+  }
+  .log-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .log-actor { font-weight: 600; }
+  .log-action { color: #595959; }
+  .log-time { color: #8c8c8c; font-size: 12px; margin-left: auto; }
+  .log-note { color: #595959; font-size: 12px; margin-top: 5px; background: #fafafa; border-radius: 4px; padding: 6px 9px; }
+  .diff { width: 100%; margin-top: 9px; border: 1px solid #f0f0f0; border-radius: 6px; overflow: hidden; }
+  .diff table { width: 100%; min-width: 0; }
+  .diff th, .diff td { padding: 7px 10px; font-size: 12px; white-space: normal; }
+  .diff th { background: #fafafa; border-bottom: 1px solid #f0f0f0; }
+  .diff td { border-bottom: 1px solid #f5f5f5; }
+  .diff tr:last-child td { border-bottom: none; }
+  .diff .to { background: #e6f4ff; color: #0958d9; font-weight: 500; }
+  .diff .from { color: #8c8c8c; text-decoration: line-through; }
+
+  code { background: rgba(0,0,0,.05); padding: 0 4px; border-radius: 3px; font-size: 11.5px; }
+</style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">Exchange - TW</div>
+  <div class="nav-group">System Management <span class="chev">▾</span></div>
+  <div class="nav-group">User Management <span class="chev">▾</span></div>
+  <div class="nav-group">Tag Management <span class="chev">▾</span></div>
+  <div class="nav-group">Risk Management <span class="chev">▾</span></div>
+  <div class="nav-group">Finance Management <span class="chev">▾</span></div>
+  <div class="nav-group">Product Management <span class="chev">▾</span></div>
+  <div class="nav-group" style="color:#1677ff">Operations Management <span class="chev" style="color:#1677ff">▴</span></div>
+  <div class="nav-child">Banner</div>
+  <div class="nav-child">App content management</div>
+  <div class="nav-child">Image</div>
+  <div class="nav-child">Wallet Operation</div>
+  <div class="nav-child">Fee</div>
+  <div class="nav-child active">[Admin] Deposit Withdraw Quota Management</div>
+  <div class="nav-child">Notification</div>
+  <div class="nav-child">TradeOps</div>
+  <div class="nav-child">Club</div>
+  <div class="nav-child">Maker Taker Fee Setting</div>
+  <div class="nav-child">T&amp;Cs setting</div>
+  <div class="nav-child">PUBS</div>
+  <div class="nav-child">OTC</div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <span>Prototype — KGI only · static demo data</span>
+    <div class="perm-switch">
+      <label for="permSel">Page permission:</label>
+      <select id="permSel" style="height:22px;min-width:auto;font-size:12px;padding:0 4px">
+        <option value="edit">edit</option>
+        <option value="view">view</option>
+      </select>
+    </div>
+    <div class="avatar">P</div>
+  </div>
+
+  <div class="content">
+    <div class="breadcrumb">Operations Management / [Admin] Deposit Withdraw Quota Management</div>
+    <div class="page-head">
+      <div class="page-title">[Admin] Deposit Withdraw Quota Management</div>
+      <button class="icon-btn" id="logBtn" title="Activity Log" aria-label="Activity Log">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="fiat">Fiat quota whitelist</div>
+      <div class="tab" data-tab="crypto">Crypto/Bitcheck quota whitelist</div>
+    </div>
+
+    <!-- ---------- FIAT ---------- -->
+    <div id="panel-fiat">
+
+      <!-- Quota reference (OP guardrail) -->
+      <div class="ref">
+        <div class="ref-head" id="refHead">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="16.5"></line><line x1="12" y1="7.5" x2="12" y2="7.6"></line>
+          </svg>
+          <b>KGI 大型企業額度上限</b>
+          <span class="toggle" id="refToggle">收合 ▴</span>
+        </div>
+        <div class="ref-body" id="refBody">
+          <div class="cap-list">
+            <div class="cap-row">
+              <span class="cap-cur">TWD</span>
+              <div class="cap-vals">
+                <div><b>入金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000</div>
+                <div><b>出金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000</div>
+              </div>
+            </div>
+            <div class="cap-row">
+              <span class="cap-cur">USD</span>
+              <div class="cap-vals">
+                <div><b>入金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000</div>
+                <div><b>出金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="filters">
+          <div class="fl"><span>User ID:</span><input type="text" id="fUser" placeholder="User ID"></div>
+          <div class="fl"><span>Status:</span>
+            <select id="fStatus">
+              <option value="">Status</option>
+              <option value="ACTIVATE">ACTIVATE</option>
+              <option value="PENDING_ACTIVATION">Pending Activation</option>
+              <option value="ACTIVATION_FAILED">Activation Failed</option>
+              <option value="DELETED">DELETED</option>
+            </select>
+          </div>
+          <div class="fl"><span>Custodian:</span>
+            <select id="fCust"><option value="">Custodian</option><option>KGI</option></select>
+          </div>
+          <button class="btn btn-primary" id="fSearch">Search</button>
+          <div class="grow"></div>
+          <button class="btn btn-primary" id="addBtn">Add whitelist</button>
+        </div>
+        <div class="table-wrap">
+          <table id="fiatTable">
+            <thead><tr>
+              <th class="col-new">UID<span class="tag-new tag">NEW</span></th>
+              <th>User ID</th><th>Currency</th><th>Custodian</th>
+              <th>Deposit quota -<br>Single</th><th>Deposit quota -<br>Daily</th>
+              <th>Deposit quota -<br>Monthly</th><th>Deposit quota -<br>Annual</th>
+              <th>Withdraw quota -<br>Single</th><th>Withdraw quota -<br>Daily</th>
+              <th>Withdraw quota -<br>Monthly</th><th>Withdraw quota -<br>Annual</th>
+              <th>Created User</th><th>Created Time</th><th>Updated Time</th>
+              <th class="col-new">Activated Time<span class="tag-new tag">NEW</span></th>
+              <th>Updated User</th><th>Status</th><th>Note</th><th>Action</th>
+            </tr></thead>
+            <tbody id="fiatBody"></tbody>
+          </table>
+        </div>
+        <div class="pager"><span>‹</span><span class="on">1</span><span>›</span></div>
+      </div>
+    </div>
+
+    <!-- ---------- CRYPTO ---------- -->
+    <div class="panel" id="panel-crypto" style="display:none">
+      <div class="filters">
+        <div class="fl"><span>User ID:</span><input type="text" placeholder="User ID"></div>
+        <div class="fl"><span>Status:</span><select><option>Status</option></select></div>
+        <div class="fl"><span>Service:</span><select><option>Service</option><option>CRYPTO_WITHDRAW</option><option>FIAT_DEPOSIT</option></select></div>
+        <div class="fl"><span>Custodian:</span><select><option>Custodian</option><option>KGI</option></select></div>
+        <button class="btn btn-primary">Search</button>
+        <div class="grow"></div>
+        <button class="btn btn-primary">Add whitelist</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th class="col-new">UID<span class="tag-new tag">NEW</span></th>
+            <th>User ID</th><th>Currency</th><th>Service</th><th>Rule</th>
+            <th>Quota Of Transaction<br>(SINGLE)</th><th>Quota Of Day<br>(DAILY)</th>
+            <th>Quota Of Month<br>(MONTHLY)</th><th>Quota Of Year</th><th>Quota Of<br>Rolling Period</th>
+            <th>Created User</th><th>Created Time</th><th>Updated Time</th><th>Updated User</th>
+          </tr></thead>
+          <tbody id="cryptoBody"></tbody>
+        </table>
+      </div>
+      <div class="pager"><span>‹</span><span class="on">1</span><span>›</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD MODAL ============ -->
+<div class="mask" id="addMask">
+  <div class="modal">
+    <h3>Add Whitelist</h3>
+
+    <div class="field">
+      <label class="req">User ID</label>
+      <input type="text" id="fmUser" placeholder="User ID" autocomplete="off">
+      <span class="err" id="errUser"></span>
+    </div>
+
+    <div class="field">
+      <label class="req">Custodian</label>
+      <select id="fmCust"><option value="">Select</option><option>KGI</option></select>
+      <span class="cap">遠銀暫無法設定大型企業額度</span>
+      <span class="err" id="errCust"></span>
+    </div>
+
+    <div class="field">
+      <label class="req">Currency</label>
+      <select id="fmCur"><option value="">Currency</option><option>TWD</option><option>USD</option></select>
+      <span class="cap">選定幣別後，系統會依該幣別控管各額度欄位的最大值</span>
+      <span class="err" id="errCur"></span>
+    </div>
+
+    <div class="field">
+      <label class="req">Note</label>
+      <input type="text" id="fmNote" placeholder="Note" autocomplete="off">
+      <span class="err" id="errNote"></span>
+    </div>
+
+    <div class="hint">
+      <b>Activated Time</b> 由系統於 KGI API 同步成功後寫入，不可手動填寫。<br>
+      存檔後狀態為 <b>Pending Activation</b>，API 成功即轉 <b>ACTIVATE</b>；失敗則轉 <b>Activation Failed</b>，需於列表 Action 手動 Retry。<br>
+      額度<b>生效後系統自動寄送 email 通知用戶</b>（email key 待新增）。<br>
+      各額度欄位有<b>依幣別控管的最大值</b>，超過將無法儲存。
+    </div>
+
+    <div class="field"><label>Deposit quota - Single</label><input type="text" id="fm_ds" data-k="ds" class="q" autocomplete="off"><span class="cap" data-cap="ds"></span><span class="err" id="err_ds"></span></div>
+    <div class="field"><label>Deposit quota - Daily</label><input type="text" id="fm_dd" data-k="dd" class="q" autocomplete="off"><span class="cap" data-cap="dd"></span><span class="err" id="err_dd"></span></div>
+    <div class="field"><label>Deposit quota - Monthly</label><input type="text" id="fm_dm" data-k="dm" class="q" autocomplete="off"><span class="cap" data-cap="dm"></span><span class="err" id="err_dm"></span></div>
+    <div class="field"><label>Deposit quota - Annual</label><input type="text" id="fm_da" data-k="da" class="q" autocomplete="off"><span class="cap" data-cap="da"></span><span class="err" id="err_da"></span></div>
+    <div class="field"><label>Withdraw quota - Single</label><input type="text" id="fm_ws" data-k="ws" class="q" autocomplete="off"><span class="cap" data-cap="ws"></span><span class="err" id="err_ws"></span></div>
+    <div class="field"><label>Withdraw quota - Daily</label><input type="text" id="fm_wd" data-k="wd" class="q" autocomplete="off"><span class="cap" data-cap="wd"></span><span class="err" id="err_wd"></span></div>
+    <div class="field"><label>Withdraw quota - Monthly</label><input type="text" id="fm_wm" data-k="wm" class="q" autocomplete="off"><span class="cap" data-cap="wm"></span><span class="err" id="err_wm"></span></div>
+    <div class="field"><label>Withdraw quota - Annual</label><input type="text" id="fm_wa" data-k="wa" class="q" autocomplete="off"><span class="cap" data-cap="wa"></span><span class="err" id="err_wa"></span></div>
+
+    <div class="form-error" id="formError"></div>
+
+    <div class="modal-foot">
+      <button class="btn" id="addCancel">Cancel</button>
+      <button class="btn btn-primary" id="addCreate">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ ACTIVITY LOG DRAWER ============ -->
+<div class="drawer-mask" id="logMask"></div>
+<aside class="drawer" id="logDrawer">
+  <div class="drawer-head">
+    <h3>Activity Log</h3>
+    <button class="close-x" id="logClose" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="log-scope" id="logScope">All changes on this page</div>
+    <div class="timeline" id="logTimeline"></div>
+  </div>
+</aside>
+
+<script>
+// ---------- 依幣別控管的額度欄位最大值（大型企業等級上限）----------
+// null = 該欄位目前無定義上限，不做檢核（Annual，見 PRD §4.6 待確認）
+var MAX_QUOTA = {
+  TWD: { ds:100000000, dd:1000000000, dm:1500000000, da:null,
+         ws:100000000, wd:1000000000, wm:1500000000, wa:null },
+  USD: { ds:3500000,   dd:35000000,   dm:50000000,   da:null,
+         ws:3500000,   wd:35000000,   wm:50000000,   wa:null }
+};
+var FIELD_LABEL = {
+  ds:"Deposit quota - Single",  dd:"Deposit quota - Daily",
+  dm:"Deposit quota - Monthly", da:"Deposit quota - Annual",
+  ws:"Withdraw quota - Single", wd:"Withdraw quota - Daily",
+  wm:"Withdraw quota - Monthly", wa:"Withdraw quota - Annual"
+};
+var QUOTA_KEYS = ["ds","dd","dm","da","ws","wd","wm","wa"];
+
+// ---------- demo data (KGI only, years normalised to 2026) ----------
+var fiatRows = [
+  { uid5:"40218", uid:"MJTF6208", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", da:"", ws:"2000000", wd:"6000000", wm:"30000000", wa:"",
+    cu:"Patrick Hung", ct:"2026/08/10 14:07:31", ut:"2026/08/10 14:07:31", at:"2026/08/10 14:07:35", atState:"pending",
+    uu:"Patrick Hung", st:"PENDING_ACTIVATION", note:"尊榮額度，KGI API 同步中" },
+  { uid5:"31547", uid:"WDFC7390", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/08/10 11:26:03", ut:"2026/08/10 11:26:03", at:"", atState:"failed",
+    uu:"Patrick Hung", st:"ACTIVATION_FAILED", note:"尊榮額度調升" },
+  { uid5:"28903", uid:"RLQU8125", cur:"USD", cust:"KGI", ds:"60000", dd:"60000", dm:"500000", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:02", atState:"synced",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"" },
+  { uid5:"15672", uid:"TLVC6827", cur:"TWD", cust:"KGI", ds:"10000000", dd:"10000000", dm:"30000000", da:"", ws:"10000000", wd:"10000000", wm:"30000000", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:39:58", atState:"synced",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"" },
+  { uid5:"39104", uid:"CYJE8412", cur:"USD", cust:"KGI", ds:"100123", dd:"100123", dm:"300123", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:05", atState:"synced",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"qa" },
+  { uid5:"20845", uid:"HPHJ4694", cur:"USD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"", atState:"none",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"D" },
+  { uid5:"47316", uid:"SRYW8869", cur:"TWD", cust:"KGI", ds:"50000", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:11", atState:"synced",
+    uu:"Patrick Hung", st:"DELETED", note:"QA" },
+  { uid5:"33520", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/16 16:49:19", ut:"2026/06/17 14:50:59", at:"2026/06/17 14:51:04", atState:"synced",
+    uu:"Patrick Hung", st:"DELETED", note:"add KGI-TWD" },
+  { uid5:"18967", uid:"NVPM7208", cur:"USD", cust:"KGI", ds:"12345678", dd:"12345678", dm:"12345678", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/17 14:23:33", ut:"2026/06/18 18:42:10", at:"2026/06/18 18:42:16", atState:"synced",
+    uu:"Patrick Hung", st:"DELETED", note:"add KGI-USD" },
+  { uid5:"33520", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+    cu:"Patrick Hung", ct:"2026/06/17 14:52:17", ut:"2026/06/17 14:52:24", at:"2026/06/17 14:52:29", atState:"synced",
+    uu:"Patrick Hung", st:"DELETED", note:"disabled vip" }
+];
+
+var cryptoRows = [
+  { uid5:"52104", uid:"NHKI7252", cur:"USD", svc:"CRYPTO_WITHDRAW", tx:"300000", d:"300000", m:"3000000", y:"", rp:"", cu:"Patrick Hung", ct:"2026/06/18 18:37:11", ut:"2026/06/18 18:47:30", uu:"Patrick Hung" },
+  { uid5:"18967", uid:"NVPM7208", cur:"USD", svc:"FIAT_DEPOSIT",    tx:"123456", d:"12345678", m:"123456789", y:"", rp:"", cu:"Patrick Hung", ct:"2026/06/16 16:54:07", ut:"2026/06/16 16:54:07", uu:"Patrick Hung" },
+  { uid5:"27438", uid:"QJDL6931", cur:"USD", svc:"CRYPTO_WITHDRAW", tx:"500000", d:"500000", m:"500000", y:"500000", rp:"", cu:"Patrick Hung", ct:"2024/02/21 16:40:06", ut:"2024/04/17 10:31:53", uu:"Patrick Hung" },
+  { uid5:"27438", uid:"QJDL6931", cur:"USD", svc:"CRYPTO_WITHDRAW", tx:"500", d:"500", m:"500", y:"500", rp:"", cu:"Patrick Hung", ct:"2024/02/21 16:37:49", ut:"2024/04/17 10:31:53", uu:"Patrick Hung" },
+  { uid5:"61092", uid:"YHIY3114", cur:"USD", svc:"CRYPTO_WITHDRAW", tx:"10", d:"10", m:"20", y:"", rp:"", cu:"Patrick Hung", ct:"2024/02/21 16:04:34", ut:"2024/04/17 10:31:50", uu:"Patrick Hung" },
+  { uid5:"48275", uid:"TEGI0386", cur:"USD", svc:"CRYPTO_WITHDRAW", tx:"1111", d:"1111", m:"1111", y:"1111", rp:"", cu:"Patrick Hung", ct:"2023/12/20 16:29:42", ut:"2024/04/17 10:31:53", uu:"Patrick Hung" },
+  { uid5:"30861", uid:"IKKU6174", cur:"USD", svc:"CRYPTO_WITHDRAW", tx:"3333333", d:"5555555", m:"7777777", y:"9999999", rp:"", cu:"Patrick Hung", ct:"2023/10/09 20:01:17", ut:"2024/04/17 10:31:53", uu:"Patrick Hung" }
+];
+
+var activityLog = [
+  { actor:"System", action:"Email notification sent", target:"18967 / NVPM7208 / USD / KGI",
+    time:"2026/06/18 18:42:19", note:"額度生效後自動寄送通知信給用戶（email key 待新增）",
+    diff:[ { f:"Email key", from:"—", to:"TBD（待定義）" } ]},
+  { actor:"Patrick Hung", action:"Created quota whitelist", target:"40218 / MJTF6208 / TWD / KGI",
+    time:"2026/08/10 14:07:31", note:"尊榮等級核定，依會員等級額度上限對照設定",
+    diff:[
+      { f:"Deposit quota - Single",  from:"—", to:"10,000,000" },
+      { f:"Deposit quota - Daily",   from:"—", to:"30,000,000" },
+      { f:"Deposit quota - Monthly", from:"—", to:"300,000,000" },
+      { f:"Status",                  from:"—", to:"Pending Activation" }
+    ]},
+  { actor:"System", action:"Activation failed", target:"31547 / WDFC7390 / TWD / KGI",
+    time:"2026/08/10 11:26:18", note:"KGI API 回應逾時，已自動重試 3 次仍失敗，需 OP 於 Action 手動 Retry",
+    diff:[
+      { f:"Status",         from:"Pending Activation", to:"Activation Failed" },
+      { f:"Activated Time", from:"—",                  to:"— (未生效)" }
+    ]},
+  { actor:"Patrick Hung", action:"Updated quota whitelist", target:"31547 / WDFC7390 / TWD / KGI",
+    time:"2026/08/10 11:26:03", note:"尊榮額度調升",
+    diff:[
+      { f:"Deposit quota - Single",  from:"1,500,000",  to:"10,000,000" },
+      { f:"Deposit quota - Daily",   from:"6,000,000",  to:"30,000,000" },
+      { f:"Deposit quota - Monthly", from:"30,000,000", to:"300,000,000" }
+    ]},
+  { actor:"Patrick Hung", action:"Updated quota whitelist", target:"18967 / NVPM7208 / USD / KGI",
+    time:"2026/06/18 18:42:10", note:"依風控複核調整單筆上限",
+    diff:[
+      { f:"Deposit quota - Single", from:"3,000,000", to:"12,345,678" },
+      { f:"Activated Time",         from:"2026/06/17 14:23:39", to:"2026/06/18 18:42:16" }
+    ]},
+  { actor:"Patrick Hung", action:"Deleted quota whitelist", target:"33520 / AHOG0279 / TWD / KGI",
+    time:"2026/06/17 14:52:24", note:"用戶降級，額度回到系統預設額度",
+    diff:[ { f:"Status", from:"ACTIVATE", to:"DELETED" } ]}
+];
+
+// ---------- status meta ----------
+var STATUS = {
+  ACTIVATE:           { label:"ACTIVATE",           cls:"tag-activate" },
+  PENDING_ACTIVATION: { label:"Pending Activation", cls:"tag-pending"  },
+  ACTIVATION_FAILED:  { label:"Activation Failed",  cls:"tag-failed"   },
+  DELETED:            { label:"DELETED",            cls:"tag-deleted"  }
+};
+
+// ---------- render helpers ----------
+function cell(v) { return v === "" || v == null ? '<span class="muted">- -</span>' : v; }
+
+function activatedCell(r) {
+  if (r.atState === "pending") {
+    return '<div class="ts">' + r.at + '<small>(UTC+08:00) · Expected</small></div>';
+  }
+  if (r.atState === "failed" || r.atState === "none" || !r.at) {
+    return '<span class="muted">- -</span>';
+  }
+  return '<div class="ts">' + r.at + '<small>(UTC+08:00)</small></div>';
+}
+
+function timeCell(v) {
+  if (!v) return '<span class="muted">- -</span>';
+  return '<div class="ts">' + v + '<small>(UTC+08:00)</small></div>';
+}
+
+function statusCell(r) {
+  var s = STATUS[r.st] || { label: r.st, cls: "" };
+  var out = '<span class="tag ' + s.cls + '">' + s.label + '</span>';
+  if (r.st === "ACTIVATION_FAILED" && r.fail) {
+    out += '<span class="fail-reason">' + r.fail + '</span>';
+  }
+  return out;
+}
+
+function canEdit() { return document.getElementById("permSel").value === "edit"; }
+
+function renderFiat() {
+  var uidF = document.getElementById("fUser").value.trim().toUpperCase();
+  var stF  = document.getElementById("fStatus").value;
+  var cuF  = document.getElementById("fCust").value;
+  var edit = canEdit();
+
+  var rows = fiatRows.filter(function (r) {
+    if (uidF && r.uid.indexOf(uidF) === -1) return false;
+    if (stF && r.st !== stF) return false;
+    if (cuF && r.cust !== cuF) return false;
+    return true;
+  });
+
+  var body = document.getElementById("fiatBody");
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="20" class="empty">No data</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rows.map(function (r) {
+    var act;
+    if (!edit) {
+      act = '<span class="muted">View only</span>';
+    } else {
+      var retry = r.st === "ACTIVATION_FAILED"
+        ? '<button class="btn btn-sm btn-primary" title="重新送出至 KGI">Retry</button>'
+        : '';
+      act = '<div class="actions">' + retry +
+            '<button class="btn btn-sm">Edit</button>' +
+            '<button class="btn btn-sm btn-danger">Delete</button></div>';
+    }
+    return '<tr' + (r.isNew ? ' class="row-new"' : '') + '>' +
+      '<td class="uid col-new">' + r.uid5 + '</td>' +
+      '<td class="uid">' + r.uid + '</td>' +
+      '<td>' + r.cur + '</td>' +
+      '<td>' + r.cust + '</td>' +
+      '<td>' + cell(r.ds) + '</td><td>' + cell(r.dd) + '</td>' +
+      '<td>' + cell(r.dm) + '</td><td>' + cell(r.da) + '</td>' +
+      '<td>' + cell(r.ws) + '</td><td>' + cell(r.wd) + '</td>' +
+      '<td>' + cell(r.wm) + '</td><td>' + cell(r.wa) + '</td>' +
+      '<td>' + cell(r.cu) + '</td>' +
+      '<td>' + timeCell(r.ct) + '</td>' +
+      '<td>' + timeCell(r.ut) + '</td>' +
+      '<td class="col-new">' + activatedCell(r) + '</td>' +
+      '<td>' + cell(r.uu) + '</td>' +
+      '<td>' + statusCell(r) + '</td>' +
+      '<td style="white-space:normal;max-width:220px">' + cell(r.note) + '</td>' +
+      '<td>' + act + '</td>' +
+    '</tr>';
+  }).join("");
+}
+
+function renderCrypto() {
+  document.getElementById("cryptoBody").innerHTML = cryptoRows.map(function (r) {
+    return '<tr>' +
+      '<td class="uid col-new">' + r.uid5 + '</td><td class="uid">' + r.uid + '</td><td>' + r.cur + '</td><td>' + r.svc + '</td>' +
+      '<td><span class="tag" style="background:#f5f5f5;border-color:#e0e0e0;color:#434343">DEFAULT</span></td>' +
+      '<td>' + cell(r.tx) + '</td><td>' + cell(r.d) + '</td><td>' + cell(r.m) + '</td>' +
+      '<td>' + cell(r.y) + '</td><td>' + cell(r.rp) + '</td>' +
+      '<td>' + cell(r.cu) + '</td>' + '<td>' + timeCell(r.ct) + '</td>' + '<td>' + timeCell(r.ut) + '</td>' +
+      '<td>' + cell(r.uu) + '</td>' +
+    '</tr>';
+  }).join("");
+}
+
+function renderLog() {
+  document.getElementById("logTimeline").innerHTML = activityLog.map(function (l) {
+    var diff = "";
+    if (l.diff && l.diff.length) {
+      diff = '<div class="diff"><table><thead><tr><th style="width:38%">Field</th><th style="width:31%">From</th><th style="width:31%">To</th></tr></thead><tbody>' +
+        l.diff.map(function (d) {
+          return '<tr><td>' + d.f + '</td><td class="from">' + d.from + '</td><td class="to">' + d.to + '</td></tr>';
+        }).join("") +
+        '</tbody></table></div>';
+    }
+    var note = l.note ? '<div class="log-note">' + l.note + '</div>' : "";
+    return '<div class="log-item">' +
+      '<div class="log-top"><span class="log-actor">' + l.actor + '</span>' +
+      '<span class="log-action">' + l.action + '</span>' +
+      '<span class="log-time">' + l.time + '</span></div>' +
+      '<div style="color:#8c8c8c;font-size:12px;margin-top:3px">' + l.target + '</div>' +
+      note + diff +
+    '</div>';
+  }).join("");
+}
+
+// ---------- events ----------
+document.querySelectorAll(".tab").forEach(function (t) {
+  t.addEventListener("click", function () {
+    document.querySelectorAll(".tab").forEach(function (x) { x.classList.remove("active"); });
+    t.classList.add("active");
+    var fiat = t.dataset.tab === "fiat";
+    document.getElementById("panel-fiat").style.display   = fiat ? "" : "none";
+    document.getElementById("panel-crypto").style.display = fiat ? "none" : "";
+  });
+});
+
+document.getElementById("refHead").addEventListener("click", function () {
+  var b = document.getElementById("refBody");
+  b.classList.toggle("collapsed");
+  document.getElementById("refToggle").textContent = b.classList.contains("collapsed") ? "展開 ▾" : "收合 ▴";
+});
+
+document.getElementById("fSearch").addEventListener("click", renderFiat);
+document.getElementById("fUser").addEventListener("keydown", function (e) { if (e.key === "Enter") renderFiat(); });
+document.getElementById("permSel").addEventListener("change", function () {
+  renderFiat();
+  document.getElementById("addBtn").disabled = !canEdit();
+});
+
+// ================= Add Whitelist =================
+var addMask = document.getElementById("addMask");
+
+function $(id) { return document.getElementById(id); }
+function fmt(n) { return Number(n).toLocaleString("en-US"); }
+function now2() {
+  var d = new Date(), p = function (x) { return String(x).padStart(2, "0"); };
+  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " +
+         p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+}
+function plusSec(ts, s) {
+  var m = ts.match(/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+  var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6] + s);
+  var p = function (x) { return String(x).padStart(2, "0"); };
+  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " +
+         p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+}
+
+// 依選定幣別更新各額度欄位的上限提示
+function refreshCaps() {
+  var cur = $("fmCur").value;
+  QUOTA_KEYS.forEach(function (k) {
+    var el = document.querySelector('[data-cap="' + k + '"]');
+    if (!cur) { el.textContent = "請先選擇 Currency"; return; }
+    var max = MAX_QUOTA[cur][k];
+    el.textContent = max === null
+      ? cur + " 無上限限制"
+      : "上限：" + cur + " " + fmt(max);
+  });
+}
+
+function clearErrors() {
+  document.querySelectorAll("#addMask .err").forEach(function (e) { e.classList.remove("on"); e.textContent = ""; });
+  document.querySelectorAll("#addMask input, #addMask select").forEach(function (e) { e.classList.remove("invalid"); });
+  $("formError").classList.remove("on");
+  $("formError").textContent = "";
+}
+
+function setErr(fieldId, errId, msg) {
+  $(errId).textContent = msg;
+  $(errId).classList.add("on");
+  $(fieldId).classList.add("invalid");
+}
+
+function resetForm() {
+  ["fmUser", "fmNote"].forEach(function (i) { $(i).value = ""; });
+  ["fmCust", "fmCur"].forEach(function (i) { $(i).value = ""; });
+  QUOTA_KEYS.forEach(function (k) { $("fm_" + k).value = ""; });
+  clearErrors();
+  refreshCaps();
+}
+
+function showToast(msg) {
+  var t = $("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  setTimeout(function () { t.classList.remove("on"); }, 3800);
+}
+
+$("fmCur").addEventListener("change", function () { refreshCaps(); clearErrors(); });
+
+$("addBtn").addEventListener("click", function () { resetForm(); addMask.classList.add("open"); });
+$("addCancel").addEventListener("click", function () { addMask.classList.remove("open"); });
+addMask.addEventListener("click", function (e) { if (e.target === addMask) addMask.classList.remove("open"); });
+
+$("addCreate").addEventListener("click", function () {
+  clearErrors();
+
+  var uid  = $("fmUser").value.trim().toUpperCase();
+  var cust = $("fmCust").value;
+  var cur  = $("fmCur").value;
+  var note = $("fmNote").value.trim();
+  var errs = [];
+
+  if (!uid)  { setErr("fmUser", "errUser", "User ID is required."); errs.push(1); }
+  if (!cust) { setErr("fmCust", "errCust", "Custodian is required."); errs.push(1); }
+  if (!cur)  { setErr("fmCur",  "errCur",  "Currency is required."); errs.push(1); }
+  if (!note) { setErr("fmNote", "errNote", "Note is required."); errs.push(1); }
+
+  // 重複檢核（沿用現行 CMS 規則 10116）
+  if (uid && cust && cur) {
+    var dup = fiatRows.some(function (r) {
+      return r.uid === uid && r.cust === cust && r.cur === cur && r.st !== "DELETED";
+    });
+    if (dup) {
+      $("formError").textContent =
+        "Vip user transaction limit already exists for this custodian and currency. (Error 10116)";
+      $("formError").classList.add("on");
+      errs.push(1);
+    }
+  }
+
+  // 額度上限檢核 — 依選定幣別控管
+  var vals = {};
+  QUOTA_KEYS.forEach(function (k) {
+    var raw = $("fm_" + k).value.trim().replace(/,/g, "");
+    if (raw === "") { vals[k] = ""; return; }
+    if (!/^\d+(\.\d+)?$/.test(raw)) {
+      setErr("fm_" + k, "err_" + k, FIELD_LABEL[k] + " must be a positive number.");
+      errs.push(1); vals[k] = ""; return;
+    }
+    if (!cur) { vals[k] = raw; return; }
+    var max = MAX_QUOTA[cur][k];
+    if (max !== null && Number(raw) > max) {
+      // ── 額度上限錯誤訊息（PRD §4.6）──
+      setErr("fm_" + k, "err_" + k,
+        FIELD_LABEL[k] + " exceeds the maximum limit for " + cur +
+        ". Maximum allowed: " + fmt(max) + ". (Error 10118)");
+      errs.push(1);
+    }
+    vals[k] = raw;
+  });
+
+  if (errs.length) { return; }
+
+  // 通過檢核 → 建立資料，狀態預設 Pending Activation
+  var t = now2();
+  var newUid5 = String(Math.floor(10000 + Math.random() * 90000));
+  var row = {
+    uid5: newUid5, uid: uid, cur: cur, cust: cust,
+    ds: vals.ds, dd: vals.dd, dm: vals.dm, da: vals.da,
+    ws: vals.ws, wd: vals.wd, wm: vals.wm, wa: vals.wa,
+    cu: "Patrick Hung", ct: t, ut: t,
+    at: plusSec(t, 5), atState: "pending",
+    uu: "Patrick Hung", st: "PENDING_ACTIVATION", note: note,
+    isNew: true
+  };
+  fiatRows.unshift(row);
+
+  // 寫入 Activity Log
+  var diff = QUOTA_KEYS.filter(function (k) { return vals[k] !== ""; }).map(function (k) {
+    return { f: FIELD_LABEL[k], from: "—", to: fmt(vals[k]) };
+  });
+  diff.push({ f: "Status", from: "—", to: "Pending Activation" });
+  activityLog.unshift({
+    actor: "Patrick Hung", action: "Created quota whitelist",
+    target: newUid5 + " / " + uid + " / " + cur + " / " + cust,
+    time: t, note: note, diff: diff
+  });
+
+  addMask.classList.remove("open");
+  // 清空篩選，確保新資料一定看得到
+  $("fUser").value = ""; $("fStatus").value = ""; $("fCust").value = "";
+  renderFiat();
+  renderLog();
+  showToast("已新增 " + uid + " / " + cur + " / " + cust + "，狀態為 Pending Activation");
+});
+
+var logMask = document.getElementById("logMask");
+var logDrawer = document.getElementById("logDrawer");
+function openLog() { logMask.classList.add("open"); logDrawer.classList.add("open"); }
+function closeLog() { logMask.classList.remove("open"); logDrawer.classList.remove("open"); }
+document.getElementById("logBtn").addEventListener("click", openLog);
+document.getElementById("logClose").addEventListener("click", closeLog);
+logMask.addEventListener("click", closeLog);
+
+// ---------- init ----------
+refreshCaps();
+renderFiat();
+renderCrypto();
+renderLog();
+</script>
+</body>
+</html>
