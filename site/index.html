@@ -147,11 +147,8 @@
   }
   .tag-activate { background: #f6ffed; color: #389e0d; border-color: #b7eb8f; }
   .tag-deleted  { background: #f5f5f5; color: #8c8c8c; border-color: #d9d9d9; }
-  .tag-pending  { background: #fffbe6; color: #d48806; border-color: #ffe58f; }
-  .tag-failed   { background: #fff1f0; color: #cf1322; border-color: #ffa39e; }
   .tag-new      { background: #1677ff; color: #fff; border-color: #1677ff; font-size: 10px; padding: 0 5px; margin-left: 6px; vertical-align: middle; }
   .tag-hold     { background: #f5f5f5; color: #8c8c8c; border-color: #d9d9d9; font-size: 10.5px; }
-  .fail-reason  { display: block; color: #cf1322; font-size: 11px; margin-top: 4px; white-space: normal; max-width: 190px; line-height: 1.45; }
   .actions { display: flex; gap: 6px; }
   .empty { padding: 48px; text-align: center; color: #bfbfbf; }
   .pager { display: flex; justify-content: flex-end; padding: 12px 16px; gap: 6px; }
@@ -184,18 +181,15 @@
   }
   .form-error.on { display: block; }
   .toast {
-    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+    position: fixed; top: 18px; right: 24px; max-width: 380px;
     background: #f6ffed; border: 1px solid #b7eb8f; color: #389e0d;
-    padding: 9px 16px; border-radius: 6px; font-size: 13px; z-index: 90;
-    box-shadow: 0 4px 14px rgba(0,0,0,.08); display: none;
+    padding: 10px 16px; border-radius: 6px; font-size: 13px; z-index: 90;
+    box-shadow: 0 4px 14px rgba(0,0,0,.10); display: none; line-height: 1.55;
   }
   .toast.on { display: block; }
+  .toast.err { background: #fff1f0; border-color: #ffa39e; color: #cf1322; }
   tr.row-new td { animation: flash 1.6s ease; }
   @keyframes flash { 0%,45% { background: #e6f4ff; } 100% { background: transparent; } }
-  .hint {
-    background: #f0f7ff; border: 1px solid #bae0ff; border-radius: 6px;
-    padding: 9px 11px; color: #595959; font-size: 12px; line-height: 1.6; margin-bottom: 14px;
-  }
   .modal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
   /* ---------- Drawer ---------- */
@@ -273,6 +267,11 @@
   <div class="topbar">
     <span>Prototype — KGI only · static demo data</span>
     <div class="perm-switch">
+      <label for="simFail" style="cursor:pointer">
+        <input type="checkbox" id="simFail" style="vertical-align:-1px;margin-right:4px">模擬 KGI API 失敗
+      </label>
+    </div>
+    <div class="perm-switch">
       <label for="permSel">Page permission:</label>
       <select id="permSel" style="height:22px;min-width:auto;font-size:12px;padding:0 4px">
         <option value="edit">edit</option>
@@ -315,15 +314,15 @@
             <div class="cap-row">
               <span class="cap-cur">TWD</span>
               <div class="cap-vals">
-                <div><b>入金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000</div>
-                <div><b>出金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000</div>
+                <div><b>入金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000; 單年 18,000,000,000</div>
+                <div><b>出金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000; 單年 18,000,000,000</div>
               </div>
             </div>
             <div class="cap-row">
               <span class="cap-cur">USD</span>
               <div class="cap-vals">
-                <div><b>入金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000</div>
-                <div><b>出金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000</div>
+                <div><b>入金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000; 單年 600,000,000</div>
+                <div><b>出金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000; 單年 600,000,000</div>
               </div>
             </div>
           </div>
@@ -337,8 +336,6 @@
             <select id="fStatus">
               <option value="">Status</option>
               <option value="ACTIVATE">ACTIVATE</option>
-              <option value="PENDING_ACTIVATION">Pending Activation</option>
-              <option value="ACTIVATION_FAILED">Activation Failed</option>
               <option value="DELETED">DELETED</option>
             </select>
           </div>
@@ -428,12 +425,6 @@
       <span class="err" id="errNote"></span>
     </div>
 
-    <div class="hint">
-      <b>Activated Time</b> 由系統於 KGI API 同步成功後寫入，不可手動填寫。<br>
-      存檔後狀態為 <b>Pending Activation</b>，API 成功即轉 <b>ACTIVATE</b>；失敗則轉 <b>Activation Failed</b>，需於列表 Action 手動 Retry。<br>
-      額度<b>生效後系統自動寄送 email 通知用戶</b>（email key 待新增）。<br>
-      各額度欄位有<b>依幣別控管的最大值</b>，超過將無法儲存。
-    </div>
 
     <div class="field"><label>Deposit quota - Single</label><input type="text" id="fm_ds" data-k="ds" class="q" autocomplete="off"><span class="cap" data-cap="ds"></span><span class="err" id="err_ds"></span></div>
     <div class="field"><label>Deposit quota - Daily</label><input type="text" id="fm_dd" data-k="dd" class="q" autocomplete="off"><span class="cap" data-cap="dd"></span><span class="err" id="err_dd"></span></div>
@@ -470,12 +461,12 @@
 
 <script>
 // ---------- 依幣別控管的額度欄位最大值（大型企業等級上限）----------
-// null = 該欄位目前無定義上限，不做檢核（Annual，見 PRD §4.6 待確認）
+// 單年上限 = 該幣別單月上限 × 12（PRD §4.4、§4.6）
 var MAX_QUOTA = {
-  TWD: { ds:100000000, dd:1000000000, dm:1500000000, da:null,
-         ws:100000000, wd:1000000000, wm:1500000000, wa:null },
-  USD: { ds:3500000,   dd:35000000,   dm:50000000,   da:null,
-         ws:3500000,   wd:35000000,   wm:50000000,   wa:null }
+  TWD: { ds:100000000, dd:1000000000, dm:1500000000, da:18000000000,
+         ws:100000000, wd:1000000000, wm:1500000000, wa:18000000000 },
+  USD: { ds:3500000,   dd:35000000,   dm:50000000,   da:600000000,
+         ws:3500000,   wd:35000000,   wm:50000000,   wa:600000000 }
 };
 var FIELD_LABEL = {
   ds:"Deposit quota - Single",  dd:"Deposit quota - Daily",
@@ -488,34 +479,34 @@ var QUOTA_KEYS = ["ds","dd","dm","da","ws","wd","wm","wa"];
 // ---------- demo data (KGI only, years normalised to 2026) ----------
 var fiatRows = [
   { uid5:"40218", uid:"MJTF6208", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", da:"", ws:"2000000", wd:"6000000", wm:"30000000", wa:"",
-    cu:"Patrick Hung", ct:"2026/08/10 14:07:31", ut:"2026/08/10 14:07:31", at:"2026/08/10 14:07:35", atState:"pending",
-    uu:"Patrick Hung", st:"PENDING_ACTIVATION", note:"尊榮額度，KGI API 同步中" },
+    cu:"Patrick Hung", ct:"2026/08/10 14:07:31", ut:"2026/08/10 14:07:31", at:"2026/08/10 14:07:31",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"尊榮額度" },
   { uid5:"31547", uid:"WDFC7390", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/08/10 11:26:03", ut:"2026/08/10 11:26:03", at:"", atState:"failed",
-    uu:"Patrick Hung", st:"ACTIVATION_FAILED", note:"尊榮額度調升" },
+    cu:"Patrick Hung", ct:"2026/08/10 11:26:03", ut:"2026/08/10 11:26:03", at:"2026/08/10 11:26:03",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"尊榮額度調升" },
   { uid5:"28903", uid:"RLQU8125", cur:"USD", cust:"KGI", ds:"60000", dd:"60000", dm:"500000", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:02", atState:"synced",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:02",
     uu:"Patrick Hung", st:"ACTIVATE", note:"" },
   { uid5:"15672", uid:"TLVC6827", cur:"TWD", cust:"KGI", ds:"10000000", dd:"10000000", dm:"30000000", da:"", ws:"10000000", wd:"10000000", wm:"30000000", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:39:58", atState:"synced",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:39:58",
     uu:"Patrick Hung", st:"ACTIVATE", note:"" },
   { uid5:"39104", uid:"CYJE8412", cur:"USD", cust:"KGI", ds:"100123", dd:"100123", dm:"300123", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:05", atState:"synced",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:05",
     uu:"Patrick Hung", st:"ACTIVATE", note:"qa" },
   { uid5:"20845", uid:"HPHJ4694", cur:"USD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"", atState:"none",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:39:54",
     uu:"Patrick Hung", st:"ACTIVATE", note:"D" },
   { uid5:"47316", uid:"SRYW8869", cur:"TWD", cust:"KGI", ds:"50000", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:11", atState:"synced",
+    cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:11",
     uu:"Patrick Hung", st:"DELETED", note:"QA" },
   { uid5:"33520", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/16 16:49:19", ut:"2026/06/17 14:50:59", at:"2026/06/17 14:51:04", atState:"synced",
+    cu:"Patrick Hung", ct:"2026/06/16 16:49:19", ut:"2026/06/17 14:50:59", at:"2026/06/17 14:51:04",
     uu:"Patrick Hung", st:"DELETED", note:"add KGI-TWD" },
   { uid5:"18967", uid:"NVPM7208", cur:"USD", cust:"KGI", ds:"12345678", dd:"12345678", dm:"12345678", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/17 14:23:33", ut:"2026/06/18 18:42:10", at:"2026/06/18 18:42:16", atState:"synced",
+    cu:"Patrick Hung", ct:"2026/06/17 14:23:33", ut:"2026/06/18 18:42:10", at:"2026/06/18 18:42:16",
     uu:"Patrick Hung", st:"DELETED", note:"add KGI-USD" },
   { uid5:"33520", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
-    cu:"Patrick Hung", ct:"2026/06/17 14:52:17", ut:"2026/06/17 14:52:24", at:"2026/06/17 14:52:29", atState:"synced",
+    cu:"Patrick Hung", ct:"2026/06/17 14:52:17", ut:"2026/06/17 14:52:24", at:"2026/06/17 14:52:29",
     uu:"Patrick Hung", st:"DELETED", note:"disabled vip" }
 ];
 
@@ -534,18 +525,12 @@ var activityLog = [
     time:"2026/06/18 18:42:19", note:"額度生效後自動寄送通知信給用戶（email key 待新增）",
     diff:[ { f:"Email key", from:"—", to:"TBD（待定義）" } ]},
   { actor:"Patrick Hung", action:"Created quota whitelist", target:"40218 / MJTF6208 / TWD / KGI",
-    time:"2026/08/10 14:07:31", note:"尊榮等級核定，依會員等級額度上限對照設定",
+    time:"2026/08/10 14:07:31", note:"尊榮等級核定，KGI API 同步成功即生效",
     diff:[
       { f:"Deposit quota - Single",  from:"—", to:"10,000,000" },
       { f:"Deposit quota - Daily",   from:"—", to:"30,000,000" },
       { f:"Deposit quota - Monthly", from:"—", to:"300,000,000" },
-      { f:"Status",                  from:"—", to:"Pending Activation" }
-    ]},
-  { actor:"System", action:"Activation failed", target:"31547 / WDFC7390 / TWD / KGI",
-    time:"2026/08/10 11:26:18", note:"KGI API 回應逾時，已自動重試 3 次仍失敗，需 OP 於 Action 手動 Retry",
-    diff:[
-      { f:"Status",         from:"Pending Activation", to:"Activation Failed" },
-      { f:"Activated Time", from:"—",                  to:"— (未生效)" }
+      { f:"Status",                  from:"—", to:"ACTIVATE" }
     ]},
   { actor:"Patrick Hung", action:"Updated quota whitelist", target:"31547 / WDFC7390 / TWD / KGI",
     time:"2026/08/10 11:26:03", note:"尊榮額度調升",
@@ -558,7 +543,7 @@ var activityLog = [
     time:"2026/06/18 18:42:10", note:"依風控複核調整單筆上限",
     diff:[
       { f:"Deposit quota - Single", from:"3,000,000", to:"12,345,678" },
-      { f:"Activated Time",         from:"2026/06/17 14:23:39", to:"2026/06/18 18:42:16" }
+      { f:"Activated Time",         from:"2026/06/17 14:23:33", to:"2026/06/18 18:42:10" }
     ]},
   { actor:"Patrick Hung", action:"Deleted quota whitelist", target:"33520 / AHOG0279 / TWD / KGI",
     time:"2026/06/17 14:52:24", note:"用戶降級，額度回到系統預設額度",
@@ -567,22 +552,15 @@ var activityLog = [
 
 // ---------- status meta ----------
 var STATUS = {
-  ACTIVATE:           { label:"ACTIVATE",           cls:"tag-activate" },
-  PENDING_ACTIVATION: { label:"Pending Activation", cls:"tag-pending"  },
-  ACTIVATION_FAILED:  { label:"Activation Failed",  cls:"tag-failed"   },
-  DELETED:            { label:"DELETED",            cls:"tag-deleted"  }
+  ACTIVATE: { label:"ACTIVATE", cls:"tag-activate" },
+  DELETED:  { label:"DELETED",  cls:"tag-deleted"  }
 };
 
 // ---------- render helpers ----------
 function cell(v) { return v === "" || v == null ? '<span class="muted">- -</span>' : v; }
 
 function activatedCell(r) {
-  if (r.atState === "pending") {
-    return '<div class="ts">' + r.at + '<small>(UTC+08:00) · Expected</small></div>';
-  }
-  if (r.atState === "failed" || r.atState === "none" || !r.at) {
-    return '<span class="muted">- -</span>';
-  }
+  if (!r.at) { return '<span class="muted">- -</span>'; }
   return '<div class="ts">' + r.at + '<small>(UTC+08:00)</small></div>';
 }
 
@@ -593,11 +571,7 @@ function timeCell(v) {
 
 function statusCell(r) {
   var s = STATUS[r.st] || { label: r.st, cls: "" };
-  var out = '<span class="tag ' + s.cls + '">' + s.label + '</span>';
-  if (r.st === "ACTIVATION_FAILED" && r.fail) {
-    out += '<span class="fail-reason">' + r.fail + '</span>';
-  }
-  return out;
+  return '<span class="tag ' + s.cls + '">' + s.label + '</span>';
 }
 
 function canEdit() { return document.getElementById("permSel").value === "edit"; }
@@ -622,17 +596,9 @@ function renderFiat() {
   }
 
   body.innerHTML = rows.map(function (r) {
-    var act;
-    if (!edit) {
-      act = '<span class="muted">View only</span>';
-    } else {
-      var retry = r.st === "ACTIVATION_FAILED"
-        ? '<button class="btn btn-sm btn-primary" title="重新送出至 KGI">Retry</button>'
-        : '';
-      act = '<div class="actions">' + retry +
-            '<button class="btn btn-sm">Edit</button>' +
-            '<button class="btn btn-sm btn-danger">Delete</button></div>';
-    }
+    var act = edit
+      ? '<div class="actions"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div>'
+      : '<span class="muted">View only</span>';
     return '<tr' + (r.isNew ? ' class="row-new"' : '') + '>' +
       '<td class="uid col-new">' + r.uid5 + '</td>' +
       '<td class="uid">' + r.uid + '</td>' +
@@ -722,13 +688,6 @@ function now2() {
   return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " +
          p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
 }
-function plusSec(ts, s) {
-  var m = ts.match(/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
-  var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6] + s);
-  var p = function (x) { return String(x).padStart(2, "0"); };
-  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " +
-         p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
-}
 
 // 依選定幣別更新各額度欄位的上限提示
 function refreshCaps() {
@@ -764,11 +723,18 @@ function resetForm() {
   refreshCaps();
 }
 
-function showToast(msg) {
-  var t = $("toast");
-  t.textContent = msg;
-  t.classList.add("on");
-  setTimeout(function () { t.classList.remove("on"); }, 3800);
+function showToast(msg, isError) {
+  var el = $("toast");
+  el.textContent = msg;
+  el.classList.toggle("err", !!isError);
+  el.classList.add("on");
+  clearTimeout(el._timer);
+  el._timer = setTimeout(function () { el.classList.remove("on"); }, 4500);
+}
+
+// 模擬呼叫 KGI API（原型：由 topbar 的「模擬 KGI API 失敗」開關控制結果）
+function callKgiApi() {
+  return { ok: !$("simFail").checked };
 }
 
 $("fmCur").addEventListener("change", function () { refreshCaps(); clearErrors(); });
@@ -827,16 +793,23 @@ $("addCreate").addEventListener("click", function () {
 
   if (errs.length) { return; }
 
-  // 通過檢核 → 建立資料，狀態預設 Pending Activation
+  // 檢核通過 → 立即呼叫 KGI API
+  var res = callKgiApi();
+  if (!res.ok) {
+    // 失敗：不建立資料，用戶額度維持原值，右上角跳出失敗訊息
+    showToast("Failed to sync with KGI. The user's quota remains unchanged. Please try again later.", true);
+    return;
+  }
+
+  // 成功 → 立即建立資料，狀態為 ACTIVATE
   var t = now2();
   var newUid5 = String(Math.floor(10000 + Math.random() * 90000));
   var row = {
     uid5: newUid5, uid: uid, cur: cur, cust: cust,
     ds: vals.ds, dd: vals.dd, dm: vals.dm, da: vals.da,
     ws: vals.ws, wd: vals.wd, wm: vals.wm, wa: vals.wa,
-    cu: "Patrick Hung", ct: t, ut: t,
-    at: plusSec(t, 5), atState: "pending",
-    uu: "Patrick Hung", st: "PENDING_ACTIVATION", note: note,
+    cu: "Patrick Hung", ct: t, ut: t, at: t,
+    uu: "Patrick Hung", st: "ACTIVATE", note: note,
     isNew: true
   };
   fiatRows.unshift(row);
@@ -845,7 +818,7 @@ $("addCreate").addEventListener("click", function () {
   var diff = QUOTA_KEYS.filter(function (k) { return vals[k] !== ""; }).map(function (k) {
     return { f: FIELD_LABEL[k], from: "—", to: fmt(vals[k]) };
   });
-  diff.push({ f: "Status", from: "—", to: "Pending Activation" });
+  diff.push({ f: "Status", from: "—", to: "ACTIVATE" });
   activityLog.unshift({
     actor: "Patrick Hung", action: "Created quota whitelist",
     target: newUid5 + " / " + uid + " / " + cur + " / " + cust,
@@ -853,11 +826,10 @@ $("addCreate").addEventListener("click", function () {
   });
 
   addMask.classList.remove("open");
-  // 清空篩選，確保新資料一定看得到
   $("fUser").value = ""; $("fStatus").value = ""; $("fCust").value = "";
   renderFiat();
   renderLog();
-  showToast("已新增 " + uid + " / " + cur + " / " + cust + "，狀態為 Pending Activation");
+  showToast("已新增 " + uid + " / " + cur + " / " + cust + "，額度已生效（ACTIVATE）");
 });
 
 var logMask = document.getElementById("logMask");

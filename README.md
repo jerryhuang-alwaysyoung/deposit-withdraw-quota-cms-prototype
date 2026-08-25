@@ -12,10 +12,11 @@ XREX Exchange 後台 `[Admin] Deposit Withdraw Quota Management` 的靜態原型
 
 ## 原型可操作項目
 
-- **Add whitelist** — 完整建立流程，含必填檢核、依幣別控管的額度上限檢核、重複設定檢核（10116）。建立成功後資料置頂寫入列表，狀態為 `Pending Activation`
+- **Add whitelist** — 完整建立流程，含必填檢核、依幣別控管的額度上限檢核、重複設定檢核（10116）。按下 Create 會立即呼叫 KGI API：成功則資料置頂寫入列表且狀態為 `ACTIVATE`；失敗則不建立資料、右上角跳出錯誤訊息（可用 topbar 的「模擬 KGI API 失敗」開關切換）
 - **Activity Log** — 標題右側 icon 開啟右側 drawer，含 `Field / From / To` 差異表
-- **Status 篩選** — `ACTIVATE` / `Pending Activation` / `Activation Failed` / `DELETED`
+- **Status 篩選** — `ACTIVATE` / `DELETED`
 - **權限切換** — 右上角可切換 `view` / `edit`，觀察異動按鈕的顯示差異
+- **模擬 KGI API 失敗** — 右上角開關，用於展示同步呼叫失敗時的行為（原型專用，非產品功能）
 
 ## Deployment
 
