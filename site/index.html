@@ -197,7 +197,6 @@
   .log-actor { font-weight: 600; }
   .log-action { color: #595959; }
   .log-time { color: #8c8c8c; font-size: 12px; margin-left: auto; }
-  .log-note { color: #595959; font-size: 12px; margin-top: 5px; background: #fafafa; border-radius: 4px; padding: 6px 9px; }
   .diff { width: 100%; margin-top: 9px; border: 1px solid #f0f0f0; border-radius: 6px; overflow: hidden; }
   .diff table { width: 100%; min-width: 0; }
   .diff th, .diff td { padding: 7px 10px; font-size: 12px; white-space: normal; }
@@ -205,7 +204,7 @@
   .diff td { border-bottom: 1px solid #f5f5f5; }
   .diff tr:last-child td { border-bottom: none; }
   .diff .to { background: #e6f4ff; color: #0958d9; font-weight: 500; }
-  .diff .from { color: #8c8c8c; text-decoration: line-through; }
+  .diff .from { color: #595959; }
 
   code { background: rgba(0,0,0,.05); padding: 0 4px; border-radius: 3px; font-size: 11.5px; }
 </style>
@@ -467,7 +466,7 @@ var cryptoRows = [
 
 var activityLog = [
   { actor:"Patrick Hung", action:"Created quota whitelist", target:"40218 / MJTF6208 / TWD / KGI",
-    time:"2026/08/10 14:07:31", note:"尊榮等級核定，KGI API 同步成功即生效",
+    time:"2026/08/10 14:07:31",
     diff:[
       { f:"Deposit quota - Single",  from:"—", to:"10,000,000" },
       { f:"Deposit quota - Daily",   from:"—", to:"30,000,000" },
@@ -475,20 +474,20 @@ var activityLog = [
       { f:"Status",                  from:"—", to:"ACTIVATE" }
     ]},
   { actor:"Patrick Hung", action:"Updated quota whitelist", target:"31547 / WDFC7390 / TWD / KGI",
-    time:"2026/08/10 11:26:03", note:"尊榮額度調升",
+    time:"2026/08/10 11:26:03",
     diff:[
       { f:"Deposit quota - Single",  from:"1,500,000",  to:"10,000,000" },
       { f:"Deposit quota - Daily",   from:"6,000,000",  to:"30,000,000" },
       { f:"Deposit quota - Monthly", from:"30,000,000", to:"300,000,000" }
     ]},
   { actor:"Patrick Hung", action:"Updated quota whitelist", target:"18967 / NVPM7208 / USD / KGI",
-    time:"2026/06/18 18:42:10", note:"依風控複核調整單筆上限",
+    time:"2026/06/18 18:42:10",
     diff:[
       { f:"Deposit quota - Single", from:"3,000,000", to:"12,345,678" },
       { f:"Activated Time",         from:"2026/06/17 14:23:33", to:"2026/06/18 18:42:10" }
     ]},
   { actor:"Patrick Hung", action:"Deleted quota whitelist", target:"33520 / AHOG0279 / TWD / KGI",
-    time:"2026/06/17 14:52:24", note:"用戶降級，額度回到系統預設額度",
+    time:"2026/06/17 14:52:24",
     diff:[ { f:"Status", from:"ACTIVATE", to:"DELETED" } ]}
 ];
 
@@ -585,13 +584,12 @@ function renderLog() {
         }).join("") +
         '</tbody></table></div>';
     }
-    var note = l.note ? '<div class="log-note">' + l.note + '</div>' : "";
     return '<div class="log-item">' +
       '<div class="log-top"><span class="log-actor">' + l.actor + '</span>' +
       '<span class="log-action">' + l.action + '</span>' +
       '<span class="log-time">' + l.time + '</span></div>' +
       '<div style="color:#8c8c8c;font-size:12px;margin-top:3px">' + l.target + '</div>' +
-      note + diff +
+      diff +
     '</div>';
   }).join("");
 }
@@ -758,7 +756,7 @@ $("addCreate").addEventListener("click", function () {
   activityLog.unshift({
     actor: "Patrick Hung", action: "Created quota whitelist",
     target: newUid5 + " / " + uid + " / " + cur + " / " + cust,
-    time: t, note: note, diff: diff
+    time: t, diff: diff
   });
 
   addMask.classList.remove("open");
