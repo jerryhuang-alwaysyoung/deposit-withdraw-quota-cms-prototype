@@ -72,28 +72,6 @@
   }
   .tab.active { color: #1677ff; border-bottom-color: #1677ff; font-weight: 500; }
 
-  /* ---------- Quota reference panel ---------- */
-  .ref {
-    background: #fff; border: 1px solid #bae0ff; border-left: 3px solid #1677ff;
-    border-radius: 8px; margin-top: 14px;
-  }
-  .ref-head {
-    display: flex; align-items: center; gap: 8px;
-    padding: 11px 16px; cursor: pointer; user-select: none;
-  }
-  .ref-head b { font-size: 13px; }
-  .ref-head .toggle { margin-left: auto; color: #1677ff; font-size: 12px; }
-  .ref-body { padding: 0 16px 16px; display: block; }
-  .ref-body.collapsed { display: none; }
-  .cap-list { display: flex; flex-direction: column; gap: 9px; }
-  .cap-row { display: flex; align-items: flex-start; gap: 12px; }
-  .cap-cur {
-    flex: 0 0 46px; font-weight: 600; font-size: 12px; color: #1677ff;
-    background: #e6f4ff; border-radius: 4px; text-align: center; padding: 2px 0; margin-top: 1px;
-  }
-  .cap-vals { font-size: 12.5px; color: #262626; line-height: 1.9; }
-  .cap-vals b { color: #595959; font-weight: 600; margin-right: 2px; }
-
   /* ---------- Panel / filters ---------- */
   .panel { background: #fff; border-radius: 8px; margin-top: 14px; }
   .filters {
@@ -145,10 +123,7 @@
     display: inline-block; padding: 1px 8px; border-radius: 10px;
     font-size: 11.5px; line-height: 18px; border: 1px solid; white-space: nowrap;
   }
-  .tag-activate { background: #f6ffed; color: #389e0d; border-color: #b7eb8f; }
-  .tag-deleted  { background: #f5f5f5; color: #8c8c8c; border-color: #d9d9d9; }
   .tag-new      { background: #1677ff; color: #fff; border-color: #1677ff; font-size: 10px; padding: 0 5px; margin-left: 6px; vertical-align: middle; }
-  .tag-hold     { background: #f5f5f5; color: #8c8c8c; border-color: #d9d9d9; font-size: 10.5px; }
   .actions { display: flex; gap: 6px; }
   .empty { padding: 48px; text-align: center; color: #bfbfbf; }
   .pager { display: flex; justify-content: flex-end; padding: 12px 16px; gap: 6px; }
@@ -300,34 +275,6 @@
     <!-- ---------- FIAT ---------- -->
     <div id="panel-fiat">
 
-      <!-- Quota reference (OP guardrail) -->
-      <div class="ref">
-        <div class="ref-head" id="refHead">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="16.5"></line><line x1="12" y1="7.5" x2="12" y2="7.6"></line>
-          </svg>
-          <b>KGI 大型企業額度上限</b>
-          <span class="toggle" id="refToggle">收合 ▴</span>
-        </div>
-        <div class="ref-body" id="refBody">
-          <div class="cap-list">
-            <div class="cap-row">
-              <span class="cap-cur">TWD</span>
-              <div class="cap-vals">
-                <div><b>入金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000; 單年 18,000,000,000</div>
-                <div><b>出金</b>　單筆 100,000,000; 單日 1,000,000,000; 單月 1,500,000,000; 單年 18,000,000,000</div>
-              </div>
-            </div>
-            <div class="cap-row">
-              <span class="cap-cur">USD</span>
-              <div class="cap-vals">
-                <div><b>入金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000; 單年 600,000,000</div>
-                <div><b>出金</b>　單筆 3,500,000; 單日 35,000,000; 單月 50,000,000; 單年 600,000,000</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="panel">
         <div class="filters">
@@ -408,14 +355,12 @@
     <div class="field">
       <label class="req">Custodian</label>
       <select id="fmCust"><option value="">Select</option><option>KGI</option></select>
-      <span class="cap">遠銀暫無法設定大型企業額度</span>
       <span class="err" id="errCust"></span>
     </div>
 
     <div class="field">
       <label class="req">Currency</label>
       <select id="fmCur"><option value="">Currency</option><option>TWD</option><option>USD</option></select>
-      <span class="cap">選定幣別後，系統會依該幣別控管各額度欄位的最大值</span>
       <span class="err" id="errCur"></span>
     </div>
 
@@ -552,8 +497,8 @@ var activityLog = [
 
 // ---------- status meta ----------
 var STATUS = {
-  ACTIVATE: { label:"ACTIVATE", cls:"tag-activate" },
-  DELETED:  { label:"DELETED",  cls:"tag-deleted"  }
+  ACTIVATE: { label:"ACTIVATE" },
+  DELETED:  { label:"DELETED"  }
 };
 
 // ---------- render helpers ----------
@@ -570,8 +515,8 @@ function timeCell(v) {
 }
 
 function statusCell(r) {
-  var s = STATUS[r.st] || { label: r.st, cls: "" };
-  return '<span class="tag ' + s.cls + '">' + s.label + '</span>';
+  var s = STATUS[r.st] || { label: r.st };
+  return s.label;
 }
 
 function canEdit() { return document.getElementById("permSel").value === "edit"; }
@@ -663,12 +608,6 @@ document.querySelectorAll(".tab").forEach(function (t) {
     document.getElementById("panel-fiat").style.display   = fiat ? "" : "none";
     document.getElementById("panel-crypto").style.display = fiat ? "none" : "";
   });
-});
-
-document.getElementById("refHead").addEventListener("click", function () {
-  var b = document.getElementById("refBody");
-  b.classList.toggle("collapsed");
-  document.getElementById("refToggle").textContent = b.classList.contains("collapsed") ? "展開 ▾" : "收合 ▴";
 });
 
 document.getElementById("fSearch").addEventListener("click", renderFiat);
