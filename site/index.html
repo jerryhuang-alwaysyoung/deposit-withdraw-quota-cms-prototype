@@ -633,7 +633,7 @@ function refreshCaps() {
   var cur = $("fmCur").value;
   QUOTA_KEYS.forEach(function (k) {
     var el = document.querySelector('[data-cap="' + k + '"]');
-    if (!cur) { el.textContent = "請先選擇 Currency"; return; }
+    if (!cur) { el.textContent = ""; return; }
     var max = MAX_QUOTA[cur][k];
     el.textContent = max === null
       ? cur + " 無上限限制"
