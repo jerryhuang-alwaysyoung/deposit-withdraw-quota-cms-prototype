@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XREX CMS Prototype — [Admin] Deposit Withdraw Quota Management (KGI only)</title>
+<title>XREX CMS Prototype — [Admin] Deposit Withdraw Quota Management</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -123,7 +123,6 @@
     display: inline-block; padding: 1px 8px; border-radius: 10px;
     font-size: 11.5px; line-height: 18px; border: 1px solid; white-space: nowrap;
   }
-  .tag-new      { background: #1677ff; color: #fff; border-color: #1677ff; font-size: 10px; padding: 0 5px; margin-left: 6px; vertical-align: middle; }
   .actions { display: flex; gap: 6px; }
   .empty { padding: 48px; text-align: center; color: #bfbfbf; }
   .pager { display: flex; justify-content: flex-end; padding: 12px 16px; gap: 6px; }
@@ -147,6 +146,19 @@
   .req::before { content: "*"; color: #ff4d4f; margin-right: 4px; }
   .field input, .field select { width: 100%; }
   .field .cap { display: block; color: #8c8c8c; font-size: 11.5px; margin-top: 4px; }
+  .userbox { background:#fafafa; border:1px solid #f0f0f0; border-radius:6px; padding:10px 12px; margin:-4px 0 13px; }
+  .ub-row { display:flex; font-size:12.5px; line-height:1.9; }
+  .ub-k { width:96px; color:#8c8c8c; flex:none; }
+  .ub-v { color:#262626; }
+  .ub-warn { color:#cf1322; }
+  .kyc-chip { display:inline-block; padding:0 7px; height:19px; line-height:19px; border-radius:3px;
+              background:#f5f5f5; border:1px solid #e0e0e0; color:#434343; font-size:11.5px; font-weight:500; }
+  .prefilled { background:#f6faff; }
+  #demoBody tr { cursor: pointer; }
+  #demoBody tr:hover { background: #f0f7ff; }
+  #demoBody td { white-space: nowrap; }
+  #demoBody td.use { white-space: normal; color:#595959; }
+  .modal { max-height: 86vh; overflow-y: auto; }
   .field .err { display: none; color: #cf1322; font-size: 11.5px; margin-top: 4px; line-height: 1.5; }
   .field .err.on { display: block; }
   .field input.invalid, .field select.invalid { border-color: #ff4d4f; }
@@ -239,11 +251,20 @@
 <!-- ============ MAIN ============ -->
 <div class="main">
   <div class="topbar">
-    <span>Prototype — KGI only · static demo data</span>
+    <span>Prototype — KGI + FEIB · static demo data</span>
     <div class="perm-switch">
-      <label for="simFail" style="cursor:pointer">
-        <input type="checkbox" id="simFail" style="vertical-align:-1px;margin-right:4px">模擬 KGI API 失敗
-      </label>
+      <label for="simMode">模擬結果:</label>
+      <select id="simMode" style="height:22px;min-width:auto;font-size:12px;padding:0 4px">
+        <option value="ok">正常</option>
+        <option value="kgiFail">KGI API 失敗</option>
+        <option value="feibFail">FEIB 批次失敗</option>
+      </select>
+    </div>
+    <div class="perm-switch">
+      <button class="btn btn-sm" id="runBatch" style="height:22px;font-size:12px">模擬 18:00 批次</button>
+    </div>
+    <div class="perm-switch">
+      <button class="btn btn-sm" id="demoBtn" style="height:22px;font-size:12px">Demo UIDs</button>
     </div>
     <div class="perm-switch">
       <label for="permSel">Page permission:</label>
@@ -277,32 +298,61 @@
 
       <div class="panel">
         <div class="filters">
-          <div class="fl"><span>User ID:</span><input type="text" id="fUser" placeholder="User ID"></div>
+          <div class="fl"><span>Search by:</span>
+            <select id="fIdType" style="min-width:96px">
+              <option value="uid">User ID</option>
+              <option value="uid5">UID</option>
+            </select>
+            <input type="text" id="fUser" placeholder="Enter User ID" style="margin-left:6px">
+          </div>
           <div class="fl"><span>Status:</span>
             <select id="fStatus">
               <option value="">Status</option>
               <option value="ACTIVATE">ACTIVATE</option>
+              <option value="PENDING ACTIVATION">PENDING ACTIVATION</option>
+              <option value="ACTIVATION FAILED">ACTIVATION FAILED</option>
               <option value="DELETED">DELETED</option>
             </select>
           </div>
           <div class="fl"><span>Custodian:</span>
-            <select id="fCust"><option value="">Custodian</option><option>KGI</option></select>
+            <select id="fCust"><option value="">Custodian</option><option>KGI</option><option>FAREAST</option></select>
+          </div>
+          <div class="fl"><span>Account:</span>
+            <select id="fAcct"><option value="">All</option><option value="INDIVIDUAL">Individual</option><option value="CORPORATE">Corporate</option></select>
+          </div>
+          <div class="fl"><span>KYC:</span>
+            <select id="fKyc"><option value="">All</option><option>Basic</option><option>Premium</option><option>Enterprise</option></select>
+          </div>
+          <div class="fl"><span>Currency:</span>
+            <select id="fCur"><option value="">All</option><option>TWD</option><option>USD</option></select>
+          </div>
+          <div class="fl"><span>Time:</span>
+            <select id="fTimeField" style="min-width:118px">
+              <option value="">Select field</option>
+              <option value="ct">Created Time</option>
+              <option value="ut">Updated Time</option>
+              <option value="at">Activated Time</option>
+            </select>
+            <input type="date" id="fFrom" disabled style="margin-left:6px">
+            <span style="margin:0 4px;color:#8c8c8c">～</span>
+            <input type="date" id="fTo" disabled>
           </div>
           <button class="btn btn-primary" id="fSearch">Search</button>
+          <button class="btn" id="fReset">Reset</button>
           <div class="grow"></div>
           <button class="btn btn-primary" id="addBtn">Add whitelist</button>
         </div>
         <div class="table-wrap">
           <table id="fiatTable">
             <thead><tr>
-              <th class="col-new">UID<span class="tag-new tag">NEW</span></th>
-              <th>User ID</th><th>Currency</th><th>Custodian</th>
+              <th class="col-new">UID</th>
+              <th>User ID</th><th class="col-new">Account Type</th><th class="col-new">KYC Level</th><th>Currency</th><th>Custodian</th>
               <th>Deposit quota -<br>Single</th><th>Deposit quota -<br>Daily</th>
-              <th>Deposit quota -<br>Monthly</th><th>Deposit quota -<br>Annual</th>
+              <th>Deposit quota -<br>Monthly</th>
               <th>Withdraw quota -<br>Single</th><th>Withdraw quota -<br>Daily</th>
-              <th>Withdraw quota -<br>Monthly</th><th>Withdraw quota -<br>Annual</th>
+              <th>Withdraw quota -<br>Monthly</th>
               <th>Created User</th><th>Created Time</th><th>Updated Time</th>
-              <th class="col-new">Activated Time<span class="tag-new tag">NEW</span></th>
+              <th class="col-new">Activated Time</th>
               <th>Updated User</th><th>Status</th><th>Note</th><th>Action</th>
             </tr></thead>
             <tbody id="fiatBody"></tbody>
@@ -313,6 +363,7 @@
     </div>
 
     <!-- ---------- CRYPTO ---------- -->
+    <!-- Crypto/Bitcheck tab：本版完全不動，僅靜態呈現現況（無 UID 欄、無 Activated Time、無額度上限檢核） -->
     <div class="panel" id="panel-crypto" style="display:none">
       <div class="filters">
         <div class="fl"><span>User ID:</span><input type="text" placeholder="User ID"></div>
@@ -326,7 +377,6 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th class="col-new">UID<span class="tag-new tag">NEW</span></th>
             <th>User ID</th><th>Currency</th><th>Service</th><th>Rule</th>
             <th>Quota Of Transaction<br>(SINGLE)</th><th>Quota Of Day<br>(DAILY)</th>
             <th>Quota Of Month<br>(MONTHLY)</th><th>Quota Of Year</th><th>Quota Of<br>Rolling Period</th>
@@ -346,20 +396,27 @@
     <h3>Add Whitelist</h3>
 
     <div class="field">
-      <label class="req">User ID</label>
-      <input type="text" id="fmUser" placeholder="User ID" autocomplete="off">
-      <span class="err" id="errUser"></span>
+      <label class="req">UID</label>
+      <input type="text" id="fmUid" placeholder="五碼數字 UID" maxlength="5" autocomplete="off">
+      <span class="err" id="errUid"></span>
+    </div>
+
+    <div class="userbox" id="userBox" style="display:none">
+      <div class="ub-row"><span class="ub-k">User ID</span><span class="ub-v" id="ubUser">- -</span></div>
+      <div class="ub-row"><span class="ub-k">Account Type</span><span class="ub-v" id="ubAcct">- -</span></div>
+      <div class="ub-row"><span class="ub-k">KYC Level</span><span class="ub-v" id="ubKyc">- -</span></div>
+      <div class="ub-row"><span class="ub-k">已開啟通路</span><span class="ub-v" id="ubCust">- -</span></div>
     </div>
 
     <div class="field">
       <label class="req">Custodian</label>
-      <select id="fmCust"><option value="">Select</option><option>KGI</option></select>
+      <select id="fmCust" disabled><option value="">先輸入 UID</option></select>
       <span class="err" id="errCust"></span>
     </div>
 
     <div class="field">
       <label class="req">Currency</label>
-      <select id="fmCur"><option value="">Currency</option><option>TWD</option><option>USD</option></select>
+      <select id="fmCur" disabled><option value="">先選擇 Custodian</option></select>
       <span class="err" id="errCur"></span>
     </div>
 
@@ -373,17 +430,38 @@
     <div class="field"><label>Deposit quota - Single</label><input type="text" id="fm_ds" data-k="ds" class="q" autocomplete="off"><span class="cap" data-cap="ds"></span><span class="err" id="err_ds"></span></div>
     <div class="field"><label>Deposit quota - Daily</label><input type="text" id="fm_dd" data-k="dd" class="q" autocomplete="off"><span class="cap" data-cap="dd"></span><span class="err" id="err_dd"></span></div>
     <div class="field"><label>Deposit quota - Monthly</label><input type="text" id="fm_dm" data-k="dm" class="q" autocomplete="off"><span class="cap" data-cap="dm"></span><span class="err" id="err_dm"></span></div>
-    <div class="field"><label>Deposit quota - Annual</label><input type="text" id="fm_da" data-k="da" class="q" autocomplete="off"><span class="cap" data-cap="da"></span><span class="err" id="err_da"></span></div>
     <div class="field"><label>Withdraw quota - Single</label><input type="text" id="fm_ws" data-k="ws" class="q" autocomplete="off"><span class="cap" data-cap="ws"></span><span class="err" id="err_ws"></span></div>
     <div class="field"><label>Withdraw quota - Daily</label><input type="text" id="fm_wd" data-k="wd" class="q" autocomplete="off"><span class="cap" data-cap="wd"></span><span class="err" id="err_wd"></span></div>
     <div class="field"><label>Withdraw quota - Monthly</label><input type="text" id="fm_wm" data-k="wm" class="q" autocomplete="off"><span class="cap" data-cap="wm"></span><span class="err" id="err_wm"></span></div>
-    <div class="field"><label>Withdraw quota - Annual</label><input type="text" id="fm_wa" data-k="wa" class="q" autocomplete="off"><span class="cap" data-cap="wa"></span><span class="err" id="err_wa"></span></div>
 
     <div class="form-error" id="formError"></div>
 
     <div class="modal-foot">
       <button class="btn" id="addCancel">Cancel</button>
       <button class="btn btn-primary" id="addCreate">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DEMO UID 面板（原型專用） ============ -->
+<div class="mask" id="demoMask">
+  <div class="modal" style="width:560px">
+    <h3>Demo UIDs</h3>
+    <p style="margin:-6px 0 12px;color:#8c8c8c;font-size:12.5px">
+      原型專用的示範帳號。點任一列即可開啟 Add whitelist 並帶入該 UID。
+    </p>
+    <div class="table-wrap" style="max-height:420px;overflow:auto">
+      <table style="width:100%">
+        <thead><tr>
+          <th style="width:76px">UID</th><th style="width:96px">User ID</th>
+          <th style="width:82px">Account</th><th style="width:88px">KYC Level</th>
+          <th style="width:150px">尚可新增</th><th>示範情境</th>
+        </tr></thead>
+        <tbody id="demoBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="demoClose">Close</button>
     </div>
   </div>
 </div>
@@ -404,52 +482,196 @@
 </aside>
 
 <script>
-// ---------- 依幣別控管的額度欄位最大值（大型企業等級上限）----------
-// 單年上限 = 該幣別單月上限 × 12（PRD §4.4、§4.6）
-var MAX_QUOTA = {
-  TWD: { ds:100000000, dd:1000000000, dm:1500000000, da:18000000000,
-         ws:100000000, wd:1000000000, wm:1500000000, wa:18000000000 },
-  USD: { ds:3500000,   dd:35000000,   dm:50000000,   da:600000000,
-         ws:3500000,   wd:35000000,   wm:50000000,   wa:600000000 }
+// ---------- 額度上限矩陣：依 gateway（Custodian × Currency）卡控 ----------
+// 來源：官方額度總表 2026-09-18 版「企業戶多維度對照總表」Layer 1 通路限額欄
+// 卡控依 gateway 取值：同一 KYC level 在不同 gateway 下上限不同，不可互推或換算
+// DB 的 custodian period_limits 隨本版一併更新為同一份官方表數值（PRD FR-OPS01-11），兩者共用單一來源
+// 陣列順序 = [單筆, 單日, 單月]；本頁不設單年維度（PRD FR-US01-03）
+// 注意：入金與出金上限並非一律相同（FR-OPS01-10）
+var QUOTA_MATRIX = {
+  KGI: {
+    TWD: {
+      INDIVIDUAL: {
+        Basic:   { d:[2000000, 2000000, 3000000],  w:[2000000, 2000000, 10000000] },
+        Premium: { d:[2000000, 2000000, 10000000], w:[2000000, 2000000, 10000000] }
+        // 個人戶無大型企業等級
+      },
+      CORPORATE: {
+        Basic:      { d:[2000000, 2000000, 3000000],        w:[2000000, 2000000, 10000000] },
+        Premium:    { d:[10000000, 30000000, 300000000],    w:[10000000, 30000000, 300000000] },
+        Enterprise: { d:[100000000, 1000000000, 1500000000],w:[100000000, 1000000000, 1500000000] }
+      }
+    },
+    USD: {
+      INDIVIDUAL: {
+        Basic:   { d:[66700, 66700, 334000], w:[66700, 66700, 334000] },
+        Premium: { d:[66700, 66700, 334000], w:[66700, 66700, 334000] }
+      },
+      CORPORATE: {
+        Basic:      { d:[66700, 66700, 100000],        w:[66700, 66700, 334000] },
+        Premium:    { d:[334000, 1000000, 10000000],   w:[334000, 1000000, 10000000] },
+        Enterprise: { d:[3500000, 35000000, 50000000], w:[3500000, 35000000, 50000000] }
+      }
+    }
+  },
+  // FAREAST × USD 存在（custodian id=2）但隸屬 XREX Cayman 主體，不列入本頁 → 本頁 FAREAST 僅 TWD
+  FAREAST: {
+    TWD: {
+      INDIVIDUAL: {
+        Basic:   { d:[1500000, 2000000, 3000000],  w:[1000000, 2000000, 5000000] },
+        Premium: { d:[1500000, 2000000, 10000000], w:[1000000, 2000000, 5000000] }
+      },
+      CORPORATE: {
+        Basic:      { d:[2000000, 2000000, 3000000],        w:[2000000, 6000000, 30000000] },
+        Premium:    { d:[10000000, 30000000, 300000000],    w:[2000000, 6000000, 30000000] },
+        Enterprise: { d:[100000000, 1000000000, 1500000000],w:[100000000, 1000000000, 1500000000] }
+      }
+    }
+  }
 };
+
+// 帳戶類型顯示名稱
+var ACCT_LABEL = { INDIVIDUAL: "Individual", CORPORATE: "Corporate" };
+
+// Demo 名冊（原型專用，供 topbar 的「Demo UIDs」面板列出）
+var DEMO_ROSTER = [
+  { uid5:"88001", use:"KYC 已降為 Basic、額度未刪 → 該列 Delete 可用（其餘列為 disabled）" },
+  { uid5:"70011", use:"企業戶 Enterprise・三種組合皆可新增（KGI TWD/USD + FEIB TWD）" },
+  { uid5:"70012", use:"企業戶 Premium・可新增 KGI TWD / USD" },
+  { uid5:"70013", use:"企業戶 Enterprise・僅 FEIB → 新增後走 PENDING ACTIVATION" },
+  { uid5:"70021", use:"個人戶 Premium・三種組合皆可新增" },
+  { uid5:"70022", use:"個人戶 Premium・僅 FEIB → 新增後走 PENDING ACTIVATION" },
+  { uid5:"60001", use:"個人戶・跨通路（KGI TWD/USD + FEIB TWD）" },
+  { uid5:"60002", use:"個人戶・僅 FEIB → 可走 PENDING ACTIVATION" },
+  { uid5:"60005", use:"個人戶・僅 KGI USD" },
+  { uid5:"60003", use:"個人戶 Basic → 應被擋下" },
+  { uid5:"28903", use:"企業戶 Enterprise・跨通路" },
+  { uid5:"51330", use:"企業戶 Enterprise・僅 FEIB" },
+  { uid5:"40218", use:"企業戶 Premium・跨通路" },
+  { uid5:"77001", use:"企業戶 Basic → 應被擋下" },
+  { uid5:"77002", use:"企業戶・無已開啟 custodian → 應被擋下" }
+];
+
+// 可於本頁設定額度的 KYC level（FR-OPS01-09：Basic 一律擋下）
+var ALLOWED_KYC = ["Premium", "Enterprise"];
+
+// 用戶目錄（原型 demo：UID → User ID / KYC level / 已開啟的 custodian 與幣別）
+var USERS = {
+  "40218": { uid:"MJTF6208", acct:"CORPORATE",  kyc:"Premium",    open:{ KGI:["TWD","USD"], FAREAST:["TWD"] } },
+  "31547": { uid:"WDFC7390", acct:"CORPORATE",  kyc:"Premium",    open:{ KGI:["TWD"] } },
+  "28903": { uid:"RLQU8125", acct:"CORPORATE",  kyc:"Enterprise", open:{ KGI:["TWD","USD"], FAREAST:["TWD"] } },
+  "15672": { uid:"TLVC6827", acct:"INDIVIDUAL", kyc:"Premium",    open:{ KGI:["TWD"], FAREAST:["TWD"] } },
+  "39104": { uid:"CYJE8412", acct:"CORPORATE",  kyc:"Enterprise", open:{ KGI:["USD"] } },
+  "20845": { uid:"HPHJ4694", acct:"INDIVIDUAL", kyc:"Premium",    open:{ KGI:["USD"] } },
+  "51330": { uid:"GKTN5104", acct:"CORPORATE",  kyc:"Enterprise", open:{ FAREAST:["TWD"] } },
+  "62817": { uid:"XBRD9043", acct:"CORPORATE",  kyc:"Enterprise", open:{ FAREAST:["TWD"], KGI:["USD"] } },
+  "88001": { uid:"DNGR8801", acct:"CORPORATE",  kyc:"Basic",      open:{ KGI:["TWD"] } },
+  // ── Add whitelist 專用（尚未有任何額度資料，可直接新增）──
+  "70011": { uid:"NEWC7011", acct:"CORPORATE",  kyc:"Enterprise", open:{ KGI:["TWD","USD"], FAREAST:["TWD"] } },
+  "70012": { uid:"NEWC7012", acct:"CORPORATE",  kyc:"Premium",    open:{ KGI:["TWD","USD"] } },
+  "70013": { uid:"NEWC7013", acct:"CORPORATE",  kyc:"Enterprise", open:{ FAREAST:["TWD"] } },
+  "70021": { uid:"NEWI7021", acct:"INDIVIDUAL", kyc:"Premium",    open:{ KGI:["TWD","USD"], FAREAST:["TWD"] } },
+  "70022": { uid:"NEWI7022", acct:"INDIVIDUAL", kyc:"Premium",    open:{ FAREAST:["TWD"] } },
+  // ── 個人戶 demo ──
+  "60001": { uid:"INDV1001", acct:"INDIVIDUAL", kyc:"Premium",    open:{ KGI:["TWD","USD"], FAREAST:["TWD"] } },
+  "60002": { uid:"INDV1002", acct:"INDIVIDUAL", kyc:"Premium",    open:{ FAREAST:["TWD"] } },
+  "60003": { uid:"INDV1003", acct:"INDIVIDUAL", kyc:"Basic",      open:{ KGI:["TWD"] } },
+  "60005": { uid:"INDV1005", acct:"INDIVIDUAL", kyc:"Premium",    open:{ KGI:["USD"] } },
+  "77001": { uid:"BSIC0001", acct:"CORPORATE",  kyc:"Basic",      open:{ KGI:["TWD"] } },
+  "77002": { uid:"NOCU0002", acct:"CORPORATE",  kyc:"Enterprise", open:{} }
+};
+
+// key → [方向, 索引]
+var KEY_MAP = { ds:["d",0], dd:["d",1], dm:["d",2],
+                ws:["w",0], wd:["w",1], wm:["w",2] };
+
+// 取同一組合下 Basic 等級的值，作為可設定額度的**下界**
+// （本頁只用於 Premium / Enterprise 升級，設得比基本額度低等於降級，視為輸入錯誤）
+function floorFor(acct, cust, cur, k) {
+  var byCust = QUOTA_MATRIX[cust]; if (!byCust) return null;
+  var byCur = byCust[cur];         if (!byCur) return null;
+  var byAcct = byCur[acct];        if (!byAcct) return null;
+  var lv = byAcct.Basic;           if (!lv) return null;
+  var m = KEY_MAP[k];
+  return lv[m[0]][m[1]];
+}
+
+// 取某 KYC level × custodian × 幣別 × 欄位的上限；組合不存在回傳 null
+function capFor(acct, kyc, cust, cur, k) {
+  var byCust = QUOTA_MATRIX[cust]; if (!byCust) return null;
+  var byCur = byCust[cur];         if (!byCur) return null;
+  var byAcct = byCur[acct];        if (!byAcct) return null;
+  var lv = byAcct[kyc];            if (!lv) return null;   // 例：個人戶無 Enterprise
+  var m = KEY_MAP[k];
+  return lv[m[0]][m[1]];
+}
+
 var FIELD_LABEL = {
   ds:"Deposit quota - Single",  dd:"Deposit quota - Daily",
-  dm:"Deposit quota - Monthly", da:"Deposit quota - Annual",
+  dm:"Deposit quota - Monthly",
   ws:"Withdraw quota - Single", wd:"Withdraw quota - Daily",
-  wm:"Withdraw quota - Monthly", wa:"Withdraw quota - Annual"
+  wm:"Withdraw quota - Monthly"
 };
-var QUOTA_KEYS = ["ds","dd","dm","da","ws","wd","wm","wa"];
+var QUOTA_KEYS = ["ds","dd","dm","ws","wd","wm"];
 
-// ---------- demo data (KGI only, years normalised to 2026) ----------
+// ---------- demo data (KGI + FEIB, years normalised to 2026) ----------
 var fiatRows = [
-  { uid5:"40218", uid:"MJTF6208", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", da:"", ws:"2000000", wd:"6000000", wm:"30000000", wa:"",
+  { uid5:"88001", acct:"CORPORATE", kyc:"Basic", uid:"DNGR8801", cur:"TWD", cust:"KGI",
+    ds:"100000000", dd:"1000000000", dm:"1500000000", ws:"100000000", wd:"1000000000", wm:"1500000000",
+    cu:"Patrick Hung", ct:"2026/07/14 11:02:36", ut:"2026/07/14 11:02:36", at:"2026/07/14 11:02:38",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"KYC 已降為 Basic，額度待刪除",
+    // 刻意的不一致：KYC 已降級但額度未刪，用來示範 Delete 解鎖與殘留風險（PRD FR-OPS01-45 的殘留風險段）
+    downgradedPendingDelete: true },
+  { uid5:"60001", acct:"INDIVIDUAL", kyc:"Premium", uid:"INDV1001", cur:"TWD", cust:"KGI",
+    ds:"2000000", dd:"2000000", dm:"10000000", ws:"2000000", wd:"2000000", wm:"10000000",
+    cu:"Patrick Hung", ct:"2026/09/23 09:15:22", ut:"2026/09/23 09:15:22", at:"2026/09/23 09:15:24",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"個人戶尊榮額度" },
+  { uid5:"60005", acct:"INDIVIDUAL", kyc:"Premium", uid:"INDV1005", cur:"USD", cust:"KGI",
+    ds:"66700", dd:"66700", dm:"334000", ws:"66700", wd:"66700", wm:"334000",
+    cu:"Patrick Hung", ct:"2026/09/23 09:22:41", ut:"2026/09/23 09:22:41", at:"2026/09/23 09:22:43",
+    uu:"Patrick Hung", st:"ACTIVATE", note:"個人戶尊榮額度（USD）" },
+  { uid5:"60002", acct:"INDIVIDUAL", kyc:"Premium", uid:"INDV1002", cur:"TWD", cust:"FAREAST",
+    ds:"1500000", dd:"2000000", dm:"10000000", ws:"1000000", wd:"2000000", wm:"5000000",
+    cu:"Patrick Hung", ct:"2026/09/23 10:03:17", ut:"2026/09/23 10:03:17", at:"",
+    uu:"Patrick Hung", st:"PENDING ACTIVATION", note:"個人戶尊榮額度（待當日 18:00 生效）" },
+  { uid5:"51330", acct:"CORPORATE", kyc:"Enterprise", uid:"GKTN5104", cur:"TWD", cust:"FAREAST",
+    ds:"100000000", dd:"1000000000", dm:"1500000000",
+    ws:"100000000", wd:"1000000000", wm:"1500000000",
+    cu:"Patrick Hung", ct:"2026/09/22 10:12:40", ut:"2026/09/22 10:12:40", at:"",
+    uu:"Patrick Hung", st:"PENDING ACTIVATION", note:"大型企業額度（待當日 18:00 批次生效）" },
+  { uid5:"62817", acct:"CORPORATE", kyc:"Enterprise", uid:"XBRD9043", cur:"TWD", cust:"FAREAST",
+    ds:"100000000", dd:"1000000000", dm:"1500000000",
+    ws:"100000000", wd:"1000000000", wm:"1500000000",
+    cu:"Patrick Hung", ct:"2026/09/19 09:41:05", ut:"2026/09/19 09:41:05", at:"",
+    uu:"Patrick Hung", st:"ACTIVATION FAILED", retry:3, note:"批次傳送失敗，已達自動補送上限" },
+  { uid5:"40218", acct:"CORPORATE", kyc:"Premium", uid:"MJTF6208", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", ws:"2000000", wd:"6000000", wm:"30000000",
     cu:"Patrick Hung", ct:"2026/08/10 14:07:31", ut:"2026/08/10 14:07:31", at:"2026/08/10 14:07:31",
     uu:"Patrick Hung", st:"ACTIVATE", note:"尊榮額度" },
-  { uid5:"31547", uid:"WDFC7390", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"31547", acct:"CORPORATE", kyc:"Premium", uid:"WDFC7390", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/08/10 11:26:03", ut:"2026/08/10 11:26:03", at:"2026/08/10 11:26:03",
     uu:"Patrick Hung", st:"ACTIVATE", note:"尊榮額度調升" },
-  { uid5:"28903", uid:"RLQU8125", cur:"USD", cust:"KGI", ds:"60000", dd:"60000", dm:"500000", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"28903", acct:"CORPORATE", kyc:"Enterprise", uid:"RLQU8125", cur:"USD", cust:"KGI", ds:"60000", dd:"60000", dm:"500000", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:02",
     uu:"Patrick Hung", st:"ACTIVATE", note:"" },
-  { uid5:"15672", uid:"TLVC6827", cur:"TWD", cust:"KGI", ds:"10000000", dd:"10000000", dm:"30000000", da:"", ws:"10000000", wd:"10000000", wm:"30000000", wa:"",
+  { uid5:"15672", acct:"INDIVIDUAL", kyc:"Premium", uid:"TLVC6827", cur:"TWD", cust:"KGI", ds:"2000000", dd:"2000000", dm:"10000000", ws:"2000000", wd:"2000000", wm:"10000000",
     cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:39:58",
     uu:"Patrick Hung", st:"ACTIVATE", note:"" },
-  { uid5:"39104", uid:"CYJE8412", cur:"USD", cust:"KGI", ds:"100123", dd:"100123", dm:"300123", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"39104", acct:"CORPORATE", kyc:"Enterprise", uid:"CYJE8412", cur:"USD", cust:"KGI", ds:"100123", dd:"100123", dm:"300123", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:05",
     uu:"Patrick Hung", st:"ACTIVATE", note:"qa" },
-  { uid5:"20845", uid:"HPHJ4694", cur:"USD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"20845", acct:"INDIVIDUAL", kyc:"Premium", uid:"HPHJ4694", cur:"USD", cust:"KGI", ds:"", dd:"", dm:"", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:39:54",
     uu:"Patrick Hung", st:"ACTIVATE", note:"D" },
-  { uid5:"47316", uid:"SRYW8869", cur:"TWD", cust:"KGI", ds:"50000", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"47316", acct:"CORPORATE", kyc:"Premium", uid:"SRYW8869", cur:"TWD", cust:"KGI", ds:"50000", dd:"", dm:"", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/06/16 15:39:54", ut:"2026/06/16 15:39:54", at:"2026/06/16 15:40:11",
     uu:"Patrick Hung", st:"DELETED", note:"QA" },
-  { uid5:"33520", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"33520", acct:"CORPORATE", kyc:"Premium", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/06/16 16:49:19", ut:"2026/06/17 14:50:59", at:"2026/06/17 14:51:04",
     uu:"Patrick Hung", st:"DELETED", note:"add KGI-TWD" },
-  { uid5:"18967", uid:"NVPM7208", cur:"USD", cust:"KGI", ds:"12345678", dd:"12345678", dm:"12345678", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"18967", acct:"CORPORATE", kyc:"Enterprise", uid:"NVPM7208", cur:"USD", cust:"KGI", ds:"3500000", dd:"35000000", dm:"50000000", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/06/17 14:23:33", ut:"2026/06/18 18:42:10", at:"2026/06/18 18:42:16",
     uu:"Patrick Hung", st:"DELETED", note:"add KGI-USD" },
-  { uid5:"33520", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", da:"", ws:"", wd:"", wm:"", wa:"",
+  { uid5:"33520", acct:"CORPORATE", kyc:"Premium", uid:"AHOG0279", cur:"TWD", cust:"KGI", ds:"", dd:"", dm:"", ws:"", wd:"", wm:"",
     cu:"Patrick Hung", ct:"2026/06/17 14:52:17", ut:"2026/06/17 14:52:24", at:"2026/06/17 14:52:29",
     uu:"Patrick Hung", st:"DELETED", note:"disabled vip" }
 ];
@@ -468,22 +690,22 @@ var activityLog = [
   { actor:"Patrick Hung", action:"Created quota whitelist", target:"40218 / MJTF6208 / TWD / KGI",
     time:"2026/08/10 14:07:31",
     diff:[
-      { f:"Deposit quota - Single",  from:"—", to:"10,000,000" },
-      { f:"Deposit quota - Daily",   from:"—", to:"30,000,000" },
-      { f:"Deposit quota - Monthly", from:"—", to:"300,000,000" },
+      { f:"Deposit quota - Single",  from:"—", to:"10000000" },
+      { f:"Deposit quota - Daily",   from:"—", to:"30000000" },
+      { f:"Deposit quota - Monthly", from:"—", to:"300000000" },
       { f:"Status",                  from:"—", to:"ACTIVATE" }
     ]},
   { actor:"Patrick Hung", action:"Updated quota whitelist", target:"31547 / WDFC7390 / TWD / KGI",
     time:"2026/08/10 11:26:03",
     diff:[
-      { f:"Deposit quota - Single",  from:"1,500,000",  to:"10,000,000" },
-      { f:"Deposit quota - Daily",   from:"6,000,000",  to:"30,000,000" },
-      { f:"Deposit quota - Monthly", from:"30,000,000", to:"300,000,000" }
+      { f:"Deposit quota - Single",  from:"1500000",  to:"10000000" },
+      { f:"Deposit quota - Daily",   from:"6000000",  to:"30000000" },
+      { f:"Deposit quota - Monthly", from:"30000000", to:"300000000" }
     ]},
   { actor:"Patrick Hung", action:"Updated quota whitelist", target:"18967 / NVPM7208 / USD / KGI",
     time:"2026/06/18 18:42:10",
     diff:[
-      { f:"Deposit quota - Single", from:"3,000,000", to:"12,345,678" },
+      { f:"Deposit quota - Single", from:"3000000", to:"12345678" },
       { f:"Activated Time",         from:"2026/06/17 14:23:33", to:"2026/06/18 18:42:10" }
     ]},
   { actor:"Patrick Hung", action:"Deleted quota whitelist", target:"33520 / AHOG0279 / TWD / KGI",
@@ -493,9 +715,13 @@ var activityLog = [
 
 // ---------- status meta ----------
 var STATUS = {
-  ACTIVATE: { label:"ACTIVATE" },
-  DELETED:  { label:"DELETED"  }
+  "ACTIVATE":            { label:"ACTIVATE" },
+  "PENDING ACTIVATION":  { label:"PENDING ACTIVATION" },
+  "ACTIVATION FAILED":   { label:"ACTIVATION FAILED" },
+  "DELETED":             { label:"DELETED" }
 };
+// 自動補送上限（PRD FR-OPS01-26，實際次數待定）
+var MAX_AUTO_RETRY = 3;
 
 // ---------- render helpers ----------
 function cell(v) { return v === "" || v == null ? '<span class="muted">- -</span>' : v; }
@@ -517,16 +743,44 @@ function statusCell(r) {
 
 function canEdit() { return document.getElementById("permSel").value === "edit"; }
 
+// Delete 僅在該用戶 KYC level 已降為 Basic 時可用（FR-OPS01-43、-44）
+function delBtn(r) {
+  if (r.kyc === "Basic") {
+    return '<button class="btn btn-sm btn-danger">Delete</button>';
+  }
+  return '<button class="btn btn-sm btn-danger" disabled ' +
+         'title="Delete is available only after the user\'s KYC level is downgraded to Basic.">Delete</button>';
+}
+
 function renderFiat() {
-  var uidF = document.getElementById("fUser").value.trim().toUpperCase();
-  var stF  = document.getElementById("fStatus").value;
-  var cuF  = document.getElementById("fCust").value;
-  var edit = canEdit();
+  var kwF    = document.getElementById("fUser").value.trim().toUpperCase();
+  var idType = document.getElementById("fIdType").value;   // "uid" = User ID, "uid5" = UID
+  var stF   = $("fStatus").value;
+  var cuF   = $("fCust").value;
+  var acF   = $("fAcct").value;
+  var kyF   = $("fKyc").value;
+  var curF  = $("fCur").value;
+  var tfF   = $("fTimeField").value;
+  var frF   = $("fFrom").value;   // yyyy-mm-dd
+  var toF   = $("fTo").value;
+  var edit  = canEdit();
+
+  // 將列表的 "YYYY/MM/DD HH:mm:ss" 轉為可比較的 YYYY-MM-DD
+  function dayOf(v) { return v ? v.slice(0, 10).replace(/\//g, "-") : ""; }
 
   var rows = fiatRows.filter(function (r) {
-    if (uidF && r.uid.indexOf(uidF) === -1) return false;
+    if (kwF && String(r[idType]).toUpperCase().indexOf(kwF) === -1) return false;
     if (stF && r.st !== stF) return false;
     if (cuF && r.cust !== cuF) return false;
+    if (acF && r.acct !== acF) return false;
+    if (kyF && r.kyc !== kyF) return false;
+    if (curF && r.cur !== curF) return false;
+    if (tfF && (frF || toF)) {
+      var d = dayOf(r[tfF]);
+      if (!d) return false;                 // 該時間欄位為空者一律不納入
+      if (frF && d < frF) return false;     // 含起始日
+      if (toF && d > toF) return false;     // 含結束日
+    }
     return true;
   });
 
@@ -537,18 +791,29 @@ function renderFiat() {
   }
 
   body.innerHTML = rows.map(function (r) {
-    var act = edit
-      ? '<div class="actions"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-danger">Delete</button></div>'
-      : '<span class="muted">View only</span>';
+    var act;
+    if (!edit) {
+      act = '<span class="muted">View only</span>';
+    } else if (r.st === "ACTIVATION FAILED" && r.cust === "FAREAST" && (r.retry || 0) >= MAX_AUTO_RETRY) {
+      // 自動補送已達上限 → 提供人工 Resend（FR-OPS01-27）
+      act = '<div class="actions"><button class="btn btn-sm btn-resend" data-uid5="' + r.uid5 + '" data-cur="' + r.cur + '">Resend</button>' +
+            '<button class="btn btn-sm btn-danger">Delete</button></div>';
+    } else if (r.st === "PENDING ACTIVATION") {
+      act = '<div class="actions">' + delBtn(r) + '</div>';
+    } else {
+      act = '<div class="actions"><button class="btn btn-sm">Edit</button>' + delBtn(r) + '</div>';
+    }
     return '<tr' + (r.isNew ? ' class="row-new"' : '') + '>' +
       '<td class="uid col-new">' + r.uid5 + '</td>' +
       '<td class="uid">' + r.uid + '</td>' +
+      '<td class="col-new">' + (ACCT_LABEL[r.acct] || '- -') + '</td>' +
+      '<td class="col-new"><span class="kyc-chip">' + (r.kyc || '- -') + '</span></td>' +
       '<td>' + r.cur + '</td>' +
       '<td>' + r.cust + '</td>' +
       '<td>' + cell(r.ds) + '</td><td>' + cell(r.dd) + '</td>' +
-      '<td>' + cell(r.dm) + '</td><td>' + cell(r.da) + '</td>' +
+      '<td>' + cell(r.dm) + '</td>' +
       '<td>' + cell(r.ws) + '</td><td>' + cell(r.wd) + '</td>' +
-      '<td>' + cell(r.wm) + '</td><td>' + cell(r.wa) + '</td>' +
+      '<td>' + cell(r.wm) + '</td>' +
       '<td>' + cell(r.cu) + '</td>' +
       '<td>' + timeCell(r.ct) + '</td>' +
       '<td>' + timeCell(r.ut) + '</td>' +
@@ -564,7 +829,7 @@ function renderFiat() {
 function renderCrypto() {
   document.getElementById("cryptoBody").innerHTML = cryptoRows.map(function (r) {
     return '<tr>' +
-      '<td class="uid col-new">' + r.uid5 + '</td><td class="uid">' + r.uid + '</td><td>' + r.cur + '</td><td>' + r.svc + '</td>' +
+      '<td class="uid">' + r.uid + '</td><td>' + r.cur + '</td><td>' + r.svc + '</td>' +
       '<td><span class="tag" style="background:#f5f5f5;border-color:#e0e0e0;color:#434343">DEFAULT</span></td>' +
       '<td>' + cell(r.tx) + '</td><td>' + cell(r.d) + '</td><td>' + cell(r.m) + '</td>' +
       '<td>' + cell(r.y) + '</td><td>' + cell(r.rp) + '</td>' +
@@ -606,6 +871,27 @@ document.querySelectorAll(".tab").forEach(function (t) {
 });
 
 document.getElementById("fSearch").addEventListener("click", renderFiat);
+$("fTimeField").addEventListener("change", function () {
+  var on = !!this.value;
+  $("fFrom").disabled = !on;
+  $("fTo").disabled = !on;
+  if (!on) { $("fFrom").value = ""; $("fTo").value = ""; }
+});
+$("fReset").addEventListener("click", function () {
+  ["fUser","fFrom","fTo"].forEach(function (i) { $(i).value = ""; });
+  ["fStatus","fCust","fAcct","fKyc","fCur","fTimeField"].forEach(function (i) { $(i).value = ""; });
+  $("fIdType").value = "uid";
+  $("fUser").placeholder = "Enter User ID";
+  $("fFrom").disabled = true; $("fTo").disabled = true;
+  renderFiat();
+});
+document.getElementById("fIdType").addEventListener("change", function () {
+  var isUid5 = this.value === "uid5";
+  var inp = document.getElementById("fUser");
+  inp.placeholder = isUid5 ? "Enter UID（五碼數字）" : "Enter User ID";
+  inp.value = "";
+  renderFiat();
+});
 document.getElementById("fUser").addEventListener("keydown", function (e) { if (e.key === "Enter") renderFiat(); });
 document.getElementById("permSel").addEventListener("change", function () {
   renderFiat();
@@ -616,23 +902,104 @@ document.getElementById("permSel").addEventListener("change", function () {
 var addMask = document.getElementById("addMask");
 
 function $(id) { return document.getElementById(id); }
-function fmt(n) { return Number(n).toLocaleString("en-US"); }
+function fmt(n) { return String(Number(n)); }   // 數字一律不加千分位符號
 function now2() {
   var d = new Date(), p = function (x) { return String(x).padStart(2, "0"); };
   return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " +
          p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
 }
 
-// 依選定幣別更新各額度欄位的上限提示
+// ---------- 引導式表單狀態 ----------
+var currentUser = null;   // { uid5, uid, kyc, open }
+
+function setSel(id, opts, placeholder, enabled) {
+  var el = $(id);
+  el.innerHTML = '<option value="">' + placeholder + '</option>' +
+    opts.map(function (o) { return '<option>' + o + '</option>'; }).join("");
+  el.disabled = !enabled;
+  el.value = "";
+}
+
+// FR-OPS01-20：輸入 UID → 帶出 KYC level、已開啟 custodian 與幣別
+function lookupUser() {
+  var uid5 = $("fmUid").value.trim();
+  currentUser = null;
+  $("userBox").style.display = "none";
+  setSel("fmCust", [], "先輸入 UID", false);
+  setSel("fmCur", [], "先選擇 Custodian", false);
+  clearQuotaFields();
+  clearErrors();
+
+  if (!uid5) return;
+  if (!/^\d{5}$/.test(uid5)) { setErr("fmUid", "errUid", "UID must be a 5-digit number."); return; }
+
+  var u = USERS[uid5];
+  if (!u) { setErr("fmUid", "errUid", "User not found."); return; }
+
+  currentUser = { uid5: uid5, uid: u.uid, acct: u.acct, kyc: u.kyc, open: u.open };
+  var custs = Object.keys(u.open);
+
+  $("ubUser").textContent = u.uid;
+  $("ubAcct").textContent = ACCT_LABEL[u.acct] || "- -";
+  $("ubKyc").innerHTML = '<span class="kyc-chip">' + u.kyc + '</span>' +
+    (ALLOWED_KYC.indexOf(u.kyc) === -1
+      ? ' <span class="ub-warn">— 不可於本頁設定額度</span>' : '');
+  $("ubCust").innerHTML = custs.length
+    ? custs.map(function (c) { return c + '（' + u.open[c].join("、") + '）'; }).join('　')
+    : '<span class="ub-warn">無已開啟的 custodian</span>';
+  $("userBox").style.display = "";
+
+  // FR-OPS01-09：Basic 一律擋下
+  if (ALLOWED_KYC.indexOf(u.kyc) === -1) {
+    setErr("fmUid", "errUid",
+      "This user's KYC level is " + u.kyc + ". Quota can only be set for Premium or Enterprise users.");
+    return;
+  }
+  // FR-OPS01-21：無已開啟 custodian
+  if (!custs.length) {
+    setErr("fmUid", "errUid", "This user has no custodian enabled.");
+    return;
+  }
+  setSel("fmCust", custs, "Select", true);
+}
+
+// FR-OPS01-21：Currency 限於該 custodian 已開啟者
+function onCustodianChange() {
+  clearQuotaFields();
+  var cust = $("fmCust").value;
+  if (!currentUser || !cust) { setSel("fmCur", [], "先選擇 Custodian", false); refreshCaps(); return; }
+  setSel("fmCur", currentUser.open[cust] || [], "Select", true);
+  refreshCaps();
+}
+
+// FR-OPS01-22：選定 Custodian + Currency 後依矩陣自動預填
+function prefillQuota() {
+  var cust = $("fmCust").value, cur = $("fmCur").value;
+  if (!currentUser || !cust || !cur) { clearQuotaFields(); refreshCaps(); return; }
+  QUOTA_KEYS.forEach(function (k) {
+    var max = capFor(currentUser.acct, currentUser.kyc, cust, cur, k);
+    var el = $("fm_" + k);
+    el.value = max === null ? "" : fmt(max);
+    el.classList.add("prefilled");
+  });
+  refreshCaps();
+}
+
+function clearQuotaFields() {
+  QUOTA_KEYS.forEach(function (k) {
+    $("fm_" + k).value = "";
+    $("fm_" + k).classList.remove("prefilled");
+  });
+}
+
+// 各額度欄位下方的上限提示（依 KYC level × custodian × 幣別 × 方向）
 function refreshCaps() {
-  var cur = $("fmCur").value;
+  var cust = $("fmCust").value, cur = $("fmCur").value;
   QUOTA_KEYS.forEach(function (k) {
     var el = document.querySelector('[data-cap="' + k + '"]');
-    if (!cur) { el.textContent = ""; return; }
-    var max = MAX_QUOTA[cur][k];
-    el.textContent = max === null
-      ? cur + " 無上限限制"
-      : "上限：" + cur + " " + fmt(max);
+    if (!currentUser || !cust || !cur) { el.textContent = ""; return; }
+    var max = capFor(currentUser.acct, currentUser.kyc, cust, cur, k);
+    el.textContent = max === null ? "" : "上限：" + cur + " " + fmt(max);
   });
 }
 
@@ -650,9 +1017,12 @@ function setErr(fieldId, errId, msg) {
 }
 
 function resetForm() {
-  ["fmUser", "fmNote"].forEach(function (i) { $(i).value = ""; });
-  ["fmCust", "fmCur"].forEach(function (i) { $(i).value = ""; });
-  QUOTA_KEYS.forEach(function (k) { $("fm_" + k).value = ""; });
+  currentUser = null;
+  $("fmUid").value = ""; $("fmNote").value = "";
+  $("userBox").style.display = "none";
+  setSel("fmCust", [], "先輸入 UID", false);
+  setSel("fmCur", [], "先選擇 Custodian", false);
+  clearQuotaFields();
   clearErrors();
   refreshCaps();
 }
@@ -666,35 +1036,41 @@ function showToast(msg, isError) {
   el._timer = setTimeout(function () { el.classList.remove("on"); }, 4500);
 }
 
-// 模擬呼叫 KGI API（原型：由 topbar 的「模擬 KGI API 失敗」開關控制結果）
-function callKgiApi() {
-  return { ok: !$("simFail").checked };
-}
+// 模擬通路結果（原型：由 topbar 的「模擬結果」下拉控制）
+function simMode() { return $("simMode").value; }
+function callKgiApi() { return { ok: simMode() !== "kgiFail" }; }
 
-$("fmCur").addEventListener("change", function () { refreshCaps(); clearErrors(); });
+$("fmUid").addEventListener("input", lookupUser);
+$("fmCust").addEventListener("change", function () { onCustodianChange(); clearErrors(); });
+$("fmCur").addEventListener("change", function () { prefillQuota(); clearErrors(); });
 
 $("addBtn").addEventListener("click", function () { resetForm(); addMask.classList.add("open"); });
 $("addCancel").addEventListener("click", function () { addMask.classList.remove("open"); });
 addMask.addEventListener("click", function (e) { if (e.target === addMask) addMask.classList.remove("open"); });
 
 $("addCreate").addEventListener("click", function () {
-  clearErrors();
+  var keepUid = $("errUid").classList.contains("on");
+  if (!keepUid) clearErrors();
 
-  var uid  = $("fmUser").value.trim().toUpperCase();
   var cust = $("fmCust").value;
   var cur  = $("fmCur").value;
   var note = $("fmNote").value.trim();
   var errs = [];
 
-  if (!uid)  { setErr("fmUser", "errUser", "User ID is required."); errs.push(1); }
+  if (!currentUser) { setErr("fmUid", "errUid", "UID is required."); errs.push(1); }
+  else if (ALLOWED_KYC.indexOf(currentUser.kyc) === -1) {
+    setErr("fmUid", "errUid",
+      "This user's KYC level is " + currentUser.kyc + ". Quota can only be set for Premium or Enterprise users.");
+    errs.push(1);
+  }
   if (!cust) { setErr("fmCust", "errCust", "Custodian is required."); errs.push(1); }
   if (!cur)  { setErr("fmCur",  "errCur",  "Currency is required."); errs.push(1); }
   if (!note) { setErr("fmNote", "errNote", "Note is required."); errs.push(1); }
 
   // 重複檢核（沿用現行 CMS 規則 10116）
-  if (uid && cust && cur) {
+  if (currentUser && cust && cur) {
     var dup = fiatRows.some(function (r) {
-      return r.uid === uid && r.cust === cust && r.cur === cur && r.st !== "DELETED";
+      return r.uid === currentUser.uid && r.cust === cust && r.cur === cur && r.st !== "DELETED";
     });
     if (dup) {
       $("formError").textContent =
@@ -704,22 +1080,35 @@ $("addCreate").addEventListener("click", function () {
     }
   }
 
-  // 額度上限檢核 — 依選定幣別控管
+  // 額度上限檢核 — 依 KYC level × custodian × 幣別 × 方向（FR-OPS01-13）
   var vals = {};
   QUOTA_KEYS.forEach(function (k) {
     var raw = $("fm_" + k).value.trim().replace(/,/g, "");
     if (raw === "") { vals[k] = ""; return; }
-    if (!/^\d+(\.\d+)?$/.test(raw)) {
-      setErr("fm_" + k, "err_" + k, FIELD_LABEL[k] + " must be a positive number.");
+
+    // (1) 含小數點 → 額度不接受小數
+    if (/^\d+\.\d*$/.test(raw) || /^\d*\.\d+$/.test(raw)) {
+      setErr("fm_" + k, "err_" + k, "Whole numbers only.");
       errs.push(1); vals[k] = ""; return;
     }
-    if (!cur) { vals[k] = raw; return; }
-    var max = MAX_QUOTA[cur][k];
+    // (2) 非純數字（文字、符號、負號等）
+    if (!/^\d+$/.test(raw)) {
+      setErr("fm_" + k, "err_" + k, "Numbers only.");
+      errs.push(1); vals[k] = ""; return;
+    }
+
+    if (!currentUser || !cust || !cur) { vals[k] = raw; return; }
+
+    // (3) 低於該組合的基本額度 → 等同降級，視為輸入錯誤
+    var floor = floorFor(currentUser.acct, cust, cur, k);
+    if (floor !== null && Number(raw) < floor) {
+      setErr("fm_" + k, "err_" + k, "Below basic limit.");
+      errs.push(1); vals[k] = raw; return;
+    }
+    // (4) 超過上限
+    var max = capFor(currentUser.acct, currentUser.kyc, cust, cur, k);
     if (max !== null && Number(raw) > max) {
-      // ── 額度上限錯誤訊息（PRD §4.6）──
-      setErr("fm_" + k, "err_" + k,
-        FIELD_LABEL[k] + " exceeds the maximum limit for " + cur +
-        ". Maximum allowed: " + fmt(max) + ". (Error 10118)");
+      setErr("fm_" + k, "err_" + k, "Exceeds maximum limit.");
       errs.push(1);
     }
     vals[k] = raw;
@@ -727,43 +1116,146 @@ $("addCreate").addEventListener("click", function () {
 
   if (errs.length) { return; }
 
-  // 檢核通過 → 立即呼叫 KGI API
-  var res = callKgiApi();
-  if (!res.ok) {
-    // 失敗：不建立資料，用戶額度維持原值，右上角跳出失敗訊息
-    showToast("Failed to sync with KGI. The user's quota remains unchanged. Please try again later.", true);
-    return;
+  var t0 = now2();
+  var isFeib = (cust === "FAREAST");
+  var st, at = "";
+
+  if (isFeib) {
+    // FEIB：非同步通路，一律先落地為 PENDING ACTIVATION（FR-OPS01-24）
+    st = "PENDING ACTIVATION";
+  } else {
+    // KGI：同步呼叫，失敗不建立任何資料
+    var res = callKgiApi();
+    if (!res.ok) {
+      showToast("Failed to sync with KGI. The user's quota remains unchanged. Please try again later.", true);
+      return;
+    }
+    st = "ACTIVATE";
+    at = t0;
   }
 
-  // 成功 → 立即建立資料，狀態為 ACTIVATE
-  var t = now2();
-  var newUid5 = String(Math.floor(10000 + Math.random() * 90000));
   var row = {
-    uid5: newUid5, uid: uid, cur: cur, cust: cust,
-    ds: vals.ds, dd: vals.dd, dm: vals.dm, da: vals.da,
-    ws: vals.ws, wd: vals.wd, wm: vals.wm, wa: vals.wa,
-    cu: "Patrick Hung", ct: t, ut: t, at: t,
-    uu: "Patrick Hung", st: "ACTIVATE", note: note,
+    uid5: currentUser.uid5, acct: currentUser.acct, kyc: currentUser.kyc, uid: currentUser.uid, cur: cur, cust: cust,
+    ds: vals.ds, dd: vals.dd, dm: vals.dm,
+    ws: vals.ws, wd: vals.wd, wm: vals.wm,
+    cu: "Patrick Hung", ct: t0, ut: t0, at: at,
+    uu: "Patrick Hung", st: st, note: note, retry: 0,
     isNew: true
   };
   fiatRows.unshift(row);
 
-  // 寫入 Activity Log
+  // 寫入 Activity Log（僅 OP 操作）
   var diff = QUOTA_KEYS.filter(function (k) { return vals[k] !== ""; }).map(function (k) {
     return { f: FIELD_LABEL[k], from: "—", to: fmt(vals[k]) };
   });
-  diff.push({ f: "Status", from: "—", to: "ACTIVATE" });
+  diff.push({ f: "Status", from: "—", to: st });
   activityLog.unshift({
     actor: "Patrick Hung", action: "Created quota whitelist",
-    target: newUid5 + " / " + uid + " / " + cur + " / " + cust,
-    time: t, diff: diff
+    target: currentUser.uid5 + " / " + currentUser.uid + " / " + cur + " / " + cust,
+    time: t0, diff: diff
   });
 
   addMask.classList.remove("open");
-  $("fUser").value = ""; $("fStatus").value = ""; $("fCust").value = "";
+  $("fReset").click();
   renderFiat();
   renderLog();
-  showToast("已新增 " + uid + " / " + cur + " / " + cust + "，額度已生效（ACTIVATE）");
+  showToast(isFeib
+    ? "已建立 " + currentUser.uid + " / " + cur + " / FAREAST，待當日 18:00 批次生效（PENDING ACTIVATION）"
+    : "已新增 " + currentUser.uid + " / " + cur + " / KGI，額度已生效（ACTIVATE）");
+});
+
+// ================= FEIB 批次生效模擬（FR-OPS01-24、-25）=================
+$("runBatch").addEventListener("click", function () {
+  var pending = fiatRows.filter(function (r) {
+    return r.cust === "FAREAST" && r.st === "PENDING ACTIVATION";
+  });
+  if (!pending.length) { showToast("目前沒有待生效（PENDING ACTIVATION）的 FEIB 資料"); return; }
+
+  var fail = (simMode() === "feibFail");
+  var t0 = now2().slice(0, 11) + "18:00:00";
+  pending.forEach(function (r) {
+    if (fail) {
+      // 批次失敗 → ACTIVATION FAILED，額度未生效、不寄信（FR-OPS01-25）
+      r.st = "ACTIVATION FAILED";
+      r.retry = (r.retry || 0) + 1;
+      r.at = "";
+    } else {
+      r.st = "ACTIVATE";
+      r.at = t0;
+      r.retry = 0;
+    }
+  });
+  renderFiat();
+  showToast(fail
+    ? pending.length + " 筆 FEIB 資料批次傳送失敗，已轉為 ACTIVATION FAILED（額度未生效，不寄送通知信）"
+    : pending.length + " 筆 FEIB 資料已於 18:00 批次生效（ACTIVATE），通知信待人員手動觸發", fail);
+});
+
+// ================= 人工補送 Resend（FR-OPS01-27）=================
+document.getElementById("fiatBody").addEventListener("click", function (e) {
+  var btn = e.target.closest(".btn-resend");
+  if (!btn) return;
+  var row = fiatRows.filter(function (r) {
+    return r.uid5 === btn.dataset.uid5 && r.cur === btn.dataset.cur && r.st === "ACTIVATION FAILED";
+  })[0];
+  if (!row) return;
+  row.st = "PENDING ACTIVATION";
+  row.retry = 0;
+  row.ut = now2();
+  activityLog.unshift({
+    actor: "Patrick Hung", action: "Resent quota whitelist to FEIB",
+    target: row.uid5 + " / " + row.uid + " / " + row.cur + " / " + row.cust,
+    time: row.ut,
+    diff: [{ f: "Status", from: "ACTIVATION FAILED", to: "PENDING ACTIVATION" }]
+  });
+  renderFiat();
+  renderLog();
+  showToast("已將 " + row.uid + " / " + row.cur + " 重新納入下一次 FTP 檔案（PENDING ACTIVATION）");
+});
+
+// ================= Demo UID 面板（原型專用）=================
+var demoMask = $("demoMask");
+
+// 列出該用戶尚未建立額度資料的 custodian × currency 組合
+function freeCombos(uid5) {
+  var u = USERS[uid5];
+  if (!u || !Object.keys(u.open).length) return '<span class="muted">—</span>';
+  var free = [];
+  Object.keys(u.open).forEach(function (c) {
+    u.open[c].forEach(function (cur) {
+      var taken = fiatRows.some(function (r) {
+        return r.uid5 === uid5 && r.cust === c && r.cur === cur && r.st !== "DELETED";
+      });
+      if (!taken) free.push(c + " " + cur);
+    });
+  });
+  return free.length ? free.join("、") : '<span class="muted">已全部建立</span>';
+}
+function renderDemo() {
+  $("demoBody").innerHTML = DEMO_ROSTER.map(function (d) {
+    var u = USERS[d.uid5];
+    return '<tr data-uid5="' + d.uid5 + '">' +
+      '<td class="uid">' + d.uid5 + '</td>' +
+      '<td class="uid">' + u.uid + '</td>' +
+      '<td>' + ACCT_LABEL[u.acct] + '</td>' +
+      '<td><span class="kyc-chip">' + u.kyc + '</span></td>' +
+      '<td class="use">' + freeCombos(d.uid5) + '</td>' +
+      '<td class="use">' + d.use + '</td>' +
+    '</tr>';
+  }).join("");
+}
+$("demoBtn").addEventListener("click", function () { renderDemo(); demoMask.classList.add("open"); });
+$("demoClose").addEventListener("click", function () { demoMask.classList.remove("open"); });
+demoMask.addEventListener("click", function (e) { if (e.target === demoMask) demoMask.classList.remove("open"); });
+$("demoBody").addEventListener("click", function (e) {
+  var tr = e.target.closest("tr[data-uid5]");
+  if (!tr) return;
+  demoMask.classList.remove("open");
+  if (!canEdit()) { showToast("目前為 view 權限，無法開啟 Add whitelist", true); return; }
+  resetForm();
+  addMask.classList.add("open");
+  $("fmUid").value = tr.dataset.uid5;
+  lookupUser();
 });
 
 var logMask = document.getElementById("logMask");
@@ -775,7 +1267,6 @@ document.getElementById("logClose").addEventListener("click", closeLog);
 logMask.addEventListener("click", closeLog);
 
 // ---------- init ----------
-refreshCaps();
 renderFiat();
 renderCrypto();
 renderLog();
