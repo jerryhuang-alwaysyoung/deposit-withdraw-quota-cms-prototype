@@ -270,7 +270,7 @@
       </select>
     </div>
     <div class="perm-switch">
-      <button class="btn btn-sm" id="runBatch" style="height:22px;font-size:12px">模擬週五批次</button>
+      <button class="btn btn-sm" id="runBatch" style="height:22px;font-size:12px">模擬週五批次（送檔→銀行完成）</button>
     </div>
     <div class="perm-switch">
       <button class="btn btn-sm" id="demoBtn" style="height:22px;font-size:12px">Demo UIDs</button>
@@ -318,10 +318,15 @@
             <select id="fStatus">
               <option value="">Status</option>
               <option value="ACTIVATE">ACTIVATE</option>
-              <option value="PENDING ACTIVATION">PENDING ACTIVATION</option>
-              <option value="UPDATE FAILED">UPDATE FAILED</option>
-              <option value="PENDING DELETION">PENDING DELETION</option>
               <option value="DELETED">DELETED</option>
+            </select>
+          </div>
+          <div class="fl"><span>Bank sync:</span>
+            <select id="fBrs" style="min-width:120px">
+              <option value="">All</option>
+              <option value="PENDING">PENDING</option>
+              <option value="UPLOADED">UPLOADED</option>
+              <option value="COMPLETED">COMPLETED</option>
             </select>
           </div>
           <div class="fl"><span>Custodian:</span>
@@ -363,7 +368,7 @@
               <th>Withdraw quota -<br>Monthly</th>
               <th>Created User</th><th>Created Time</th><th>Updated Time</th>
               <th class="col-new">Activated Time</th>
-              <th>Updated User</th><th>Status</th><th>Note</th><th>Action</th>
+              <th>Updated User</th><th>Status</th><th class="col-new">Bank sync status</th><th>Note</th><th>Action</th>
             </tr></thead>
             <tbody id="fiatBody"></tbody>
           </table>
@@ -639,11 +644,11 @@ var ROSTER_LEGACY = [
   { uid5:"88001", use:"KYC 已降為 Basic、額度未刪 → 該列 Delete 可用（其餘列為 disabled）" },
   { uid5:"70011", use:"企業戶 Enterprise・三種組合皆可新增（KGI TWD/USD + FEIB TWD）" },
   { uid5:"70012", use:"企業戶 Premium・可新增 KGI TWD / USD" },
-  { uid5:"70013", use:"企業戶 Enterprise・僅 FEIB → 新增後走 PENDING ACTIVATION" },
+  { uid5:"70013", use:"企業戶 Enterprise・僅 FEIB → 新增後銀行同步狀態為 PENDING" },
   { uid5:"70021", use:"個人戶 Premium・三種組合皆可新增" },
-  { uid5:"70022", use:"個人戶 Premium・僅 FEIB → 新增後走 PENDING ACTIVATION" },
+  { uid5:"70022", use:"個人戶 Premium・僅 FEIB → 新增後銀行同步狀態為 PENDING" },
   { uid5:"60001", use:"個人戶・跨通路（KGI TWD/USD + FEIB TWD）" },
-  { uid5:"60002", use:"個人戶・僅 FEIB → 可走 PENDING ACTIVATION" },
+  { uid5:"60002", use:"個人戶・僅 FEIB → 新增後銀行同步狀態為 PENDING" },
   { uid5:"60005", use:"個人戶・僅 KGI USD" },
   { uid5:"60003", use:"個人戶 Basic → 應被擋下" },
   { uid5:"28903", use:"企業戶 Enterprise・跨通路" },
@@ -659,11 +664,11 @@ var ROSTER_PREMIUM = [
   { uid5:"88001", use:"KYC 已降為 Basic、額度未刪 → 該列 Delete 可用（其餘列為 disabled）" },
   { uid5:"70011", use:"企業戶 Premium・三種組合皆可新增（KGI TWD/USD + FEIB TWD）" },
   { uid5:"70012", use:"企業戶 Premium・可新增 KGI TWD / USD" },
-  { uid5:"70013", use:"企業戶 Premium・僅 FEIB → 新增後走 PENDING ACTIVATION" },
+  { uid5:"70013", use:"企業戶 Premium・僅 FEIB → 新增後銀行同步狀態為 PENDING" },
   { uid5:"70021", use:"個人戶 Premium・三種組合皆可新增" },
-  { uid5:"70022", use:"個人戶 Premium・僅 FEIB → 新增後走 PENDING ACTIVATION" },
+  { uid5:"70022", use:"個人戶 Premium・僅 FEIB → 新增後銀行同步狀態為 PENDING" },
   { uid5:"60001", use:"個人戶・跨通路（KGI TWD/USD + FEIB TWD）" },
-  { uid5:"60002", use:"個人戶・僅 FEIB → 可走 PENDING ACTIVATION" },
+  { uid5:"60002", use:"個人戶・僅 FEIB → 新增後銀行同步狀態為 PENDING" },
   { uid5:"60005", use:"個人戶・僅 KGI USD" },
   { uid5:"60003", use:"個人戶 Basic → 應被擋下" },
   { uid5:"28903", use:"企業戶 Premium・跨通路" },
@@ -693,17 +698,17 @@ var ROWS_LEGACY = [
   { uid5:"60002", acct:"INDIVIDUAL", kyc:"Premium", uid:"INDV1002", cur:"TWD", cust:"FAREAST",
     ds:"1500000", dd:"2000000", dm:"10000000", ws:"1000000", wd:"2000000", wm:"5000000",
     cu:"Patrick Hung", ct:"2026/09/23 10:03:17", ut:"2026/09/23 10:03:17", at:"",
-    uu:"Patrick Hung", st:"PENDING ACTIVATION", pendingOp:"activate", note:"個人戶尊榮額度（待當日 18:00 生效）" },
+    uu:"Patrick Hung", st:"ACTIVATE", brs:"PENDING", pendingOp:"activate", note:"個人戶尊榮額度（待週五批次送銀行）" },
   { uid5:"51330", acct:"CORPORATE", kyc:"Enterprise", uid:"GKTN5104", cur:"TWD", cust:"FAREAST",
     ds:"10000000", dd:"30000000", dm:"300000000",
     ws:"2000000", wd:"6000000", wm:"30000000",
     cu:"Patrick Hung", ct:"2026/09/22 10:12:40", ut:"2026/09/22 10:12:40", at:"",
-    uu:"Patrick Hung", st:"PENDING ACTIVATION", pendingOp:"activate", note:"尊榮額度（待週五批次生效）" },
+    uu:"Patrick Hung", st:"ACTIVATE", brs:"PENDING", pendingOp:"activate", note:"尊榮額度（待週五批次送銀行）" },
   { uid5:"62817", acct:"CORPORATE", kyc:"Enterprise", uid:"XBRD9043", cur:"TWD", cust:"FAREAST",
     ds:"10000000", dd:"30000000", dm:"300000000",
     ws:"2000000", wd:"6000000", wm:"30000000",
     cu:"Patrick Hung", ct:"2026/09/19 09:41:05", ut:"2026/09/19 09:41:05", at:"",
-    uu:"Patrick Hung", st:"UPDATE FAILED", pendingOp:"activate", retry:3, note:"批次更新失敗，待下一次週五批次自動重新納入" },
+    uu:"Patrick Hung", st:"ACTIVATE", brs:"PENDING", pendingOp:"activate", retry:3, note:"上次批次送檔失敗，待下一次週五批次自動重新納入" },
   { uid5:"40218", acct:"CORPORATE", kyc:"Premium", uid:"MJTF6208", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", ws:"2000000", wd:"6000000", wm:"30000000",
     cu:"Patrick Hung", ct:"2026/08/10 14:07:31", ut:"2026/08/10 14:07:31", at:"2026/08/10 14:07:31",
     uu:"Patrick Hung", st:"ACTIVATE", note:"尊榮額度" },
@@ -754,17 +759,17 @@ var ROWS_PREMIUM = [
   { uid5:"60002", acct:"INDIVIDUAL", kyc:"Premium", uid:"INDV1002", cur:"TWD", cust:"FAREAST",
     ds:"1500000", dd:"2000000", dm:"10000000", ws:"1000000", wd:"2000000", wm:"5000000",
     cu:"Patrick Hung", ct:"2026/09/23 10:03:17", ut:"2026/09/23 10:03:17", at:"",
-    uu:"Patrick Hung", st:"PENDING ACTIVATION", pendingOp:"activate", note:"個人戶尊榮額度（待當日 18:00 生效）" },
+    uu:"Patrick Hung", st:"ACTIVATE", brs:"PENDING", pendingOp:"activate", note:"個人戶尊榮額度（待週五批次送銀行）" },
   { uid5:"51330", acct:"CORPORATE", kyc:"Premium", uid:"GKTN5104", cur:"TWD", cust:"FAREAST",
     ds:"10000000", dd:"30000000", dm:"300000000",
     ws:"2000000", wd:"6000000", wm:"30000000",
     cu:"Patrick Hung", ct:"2026/09/22 10:12:40", ut:"2026/09/22 10:12:40", at:"",
-    uu:"Patrick Hung", st:"PENDING ACTIVATION", pendingOp:"activate", note:"尊榮額度（待週五批次生效）" },
+    uu:"Patrick Hung", st:"ACTIVATE", brs:"PENDING", pendingOp:"activate", note:"尊榮額度（待週五批次送銀行）" },
   { uid5:"62817", acct:"CORPORATE", kyc:"Premium", uid:"XBRD9043", cur:"TWD", cust:"FAREAST",
     ds:"10000000", dd:"30000000", dm:"300000000",
     ws:"2000000", wd:"6000000", wm:"30000000",
     cu:"Patrick Hung", ct:"2026/09/19 09:41:05", ut:"2026/09/19 09:41:05", at:"",
-    uu:"Patrick Hung", st:"UPDATE FAILED", pendingOp:"activate", retry:3, note:"批次更新失敗，待下一次週五批次自動重新納入" },
+    uu:"Patrick Hung", st:"ACTIVATE", brs:"PENDING", pendingOp:"activate", retry:3, note:"上次批次送檔失敗，待下一次週五批次自動重新納入" },
   { uid5:"40218", acct:"CORPORATE", kyc:"Premium", uid:"MJTF6208", cur:"TWD", cust:"KGI", ds:"10000000", dd:"30000000", dm:"300000000", ws:"2000000", wd:"6000000", wm:"30000000",
     cu:"Patrick Hung", ct:"2026/08/10 14:07:31", ut:"2026/08/10 14:07:31", at:"2026/08/10 14:07:31",
     uu:"Patrick Hung", st:"ACTIVATE", note:"尊榮額度" },
@@ -919,12 +924,17 @@ function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 // ---------- status meta ----------
 var STATUS = {
-  "ACTIVATE":            { label:"ACTIVATE" },
-  "PENDING ACTIVATION":  { label:"PENDING ACTIVATION" },
-  "UPDATE FAILED":   { label:"UPDATE FAILED" },
-  "PENDING DELETION":    { label:"PENDING DELETION" },
-  "DELETED":             { label:"DELETED" }
+  "ACTIVATE": { label:"ACTIVATE" },
+  "DELETED":  { label:"DELETED" }
 };
+// 銀行同步狀態：XREX 端的設定結果（Status）與銀行是否已收到／處理完成，為兩件事
+var BANK_STATUS = {
+  "PENDING":   { label:"PENDING" },     // 尚未送出至銀行（FEIB 待週五批次）
+  "UPLOADED":  { label:"UPLOADED" },    // 檔案已上傳至銀行 FTP，待銀行處理
+  "COMPLETED": { label:"COMPLETED" }    // 銀行已接收並處理完成
+};
+// 一筆資料是否仍佔用該 custodian × currency 的名額
+function isLive(r) { return !(r.st === "DELETED" && r.brs === "COMPLETED"); }
 // 批次重試排程（PRD FR-US01-40）：11:00 首次，失敗則每小時一次、最多 3 次至 14:00
 var BATCH_RETRY_MAX = 3;
 var SLACK_CHANNEL = "alert-fiat-feib-prod";
@@ -948,6 +958,11 @@ function statusCell(r) {
   return s.label;
 }
 
+function bankStatusCell(r) {
+  var b = BANK_STATUS[r.brs];
+  return b ? b.label : '<span class="muted">- -</span>';
+}
+
 function canEdit() { return document.getElementById("permSel").value === "edit"; }
 
 // Delete 僅在該用戶 KYC level 已降為 Basic 時可用（FR-OPS01-43、-44）
@@ -963,6 +978,7 @@ function renderFiat() {
   var kwF    = document.getElementById("fUser").value.trim().toUpperCase();
   var idType = document.getElementById("fIdType").value;   // "uid" = User ID, "uid5" = UID
   var stF   = $("fStatus").value;
+  var brsF  = $("fBrs").value;
   var cuF   = $("fCust").value;
   var acF   = $("fAcct").value;
   var kyF   = $("fKyc").value;
@@ -978,6 +994,7 @@ function renderFiat() {
   var rows = fiatRows.filter(function (r) {
     if (kwF && String(r[idType]).toUpperCase().indexOf(kwF) === -1) return false;
     if (stF && r.st !== stF) return false;
+    if (brsF && r.brs !== brsF) return false;
     if (cuF && r.cust !== cuF) return false;
     if (acF && r.acct !== acF) return false;
     if (kyF && r.kyc !== kyF) return false;
@@ -993,7 +1010,7 @@ function renderFiat() {
 
   var body = document.getElementById("fiatBody");
   if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="20" class="empty">No data</td></tr>';
+    body.innerHTML = '<tr><td colspan="21" class="empty">No data</td></tr>';
     return;
   }
 
@@ -1001,13 +1018,11 @@ function renderFiat() {
     var act;
     if (!edit) {
       act = '<span class="muted">View only</span>';
-    } else if (r.st === "UPDATE FAILED") {
-      // CMS 不提供 retry／Resend，僅反映狀態（FR-OPS01-26～-28）
-      act = '<span class="muted">Auto-retry by batch</span>';
-    } else if (r.st === "PENDING DELETION") {
-      act = '<span class="muted">Pending deletion</span>';
-    } else if (r.st === "PENDING ACTIVATION") {
-      act = '<div class="actions">' + delBtn(r) + '</div>';
+    } else if (r.cust === "FAREAST" && r.brs !== "COMPLETED") {
+      // 已送出但銀行尚未接收完成：CMS 不提供 retry／Resend，僅反映狀態（FR-OPS01-26～-28）
+      act = (r.st === "DELETED")
+        ? '<span class="muted">Awaiting bank</span>'
+        : '<div class="actions">' + delBtn(r) + '</div>';
     } else {
       act = '<div class="actions"><button class="btn btn-sm">Edit</button>' + delBtn(r) + '</div>';
     }
@@ -1028,6 +1043,7 @@ function renderFiat() {
       '<td class="col-new">' + activatedCell(r) + '</td>' +
       '<td>' + cell(r.uu) + '</td>' +
       '<td>' + statusCell(r) + '</td>' +
+      '<td class="col-new">' + bankStatusCell(r) + '</td>' +
       '<td style="white-space:normal;max-width:220px">' + cell(r.note) + '</td>' +
       '<td>' + act + '</td>' +
     '</tr>';
@@ -1087,7 +1103,7 @@ $("fTimeField").addEventListener("change", function () {
 });
 $("fReset").addEventListener("click", function () {
   ["fUser","fFrom","fTo"].forEach(function (i) { $(i).value = ""; });
-  ["fStatus","fCust","fAcct","fKyc","fCur","fTimeField"].forEach(function (i) { $(i).value = ""; });
+  ["fStatus","fBrs","fCust","fAcct","fKyc","fCur","fTimeField"].forEach(function (i) { $(i).value = ""; });
   $("fIdType").value = "uid";
   $("fUser").placeholder = "Enter User ID";
   $("fFrom").disabled = true; $("fTo").disabled = true;
@@ -1278,7 +1294,7 @@ $("addCreate").addEventListener("click", function () {
   // 重複檢核（沿用現行 CMS 規則 10116）
   if (currentUser && cust && cur) {
     var dup = fiatRows.some(function (r) {
-      return r.uid === currentUser.uid && r.cust === cust && r.cur === cur && r.st !== "DELETED";
+      return r.uid === currentUser.uid && r.cust === cust && r.cur === cur && isLive(r);
     });
     if (dup) {
       $("formError").textContent =
@@ -1324,7 +1340,7 @@ $("addCreate").addEventListener("click", function () {
 
   // 等級變更提示（FR-OPS01-49）：本次設定會使該用戶由 Basic 升為 Premium 時提示
   var alreadyPremium = fiatRows.some(function (r) {
-    return r.uid5 === currentUser.uid5 && r.st !== "DELETED" && r.st !== "PENDING DELETION";
+    return r.uid5 === currentUser.uid5 && isLive(r);
   });
   if (!alreadyPremium) {
     if (!W_confirm("This will change the user's member level to " + currentUser.kyc +
@@ -1335,9 +1351,11 @@ $("addCreate").addEventListener("click", function () {
   var isFeib = (cust === "FAREAST");
   var st, at = "";
 
+  var brs;
   if (isFeib) {
-    // FEIB：非同步通路，一律先落地為 PENDING ACTIVATION（FR-OPS01-24）
-    st = "PENDING ACTIVATION";
+    // FEIB：非同步通路。CMS 端即為 ACTIVATE，銀行端尚未收到 → Bank sync status = PENDING
+    st = "ACTIVATE";
+    brs = "PENDING";
   } else {
     // KGI：同步呼叫，失敗不建立任何資料
     var res = callKgiApi();
@@ -1346,6 +1364,7 @@ $("addCreate").addEventListener("click", function () {
       return;
     }
     st = "ACTIVATE";
+    brs = "COMPLETED";   // KGI 為同步通路，回應成功即代表銀行端已接收
     at = t0;
   }
 
@@ -1354,7 +1373,7 @@ $("addCreate").addEventListener("click", function () {
     ds: vals.ds, dd: vals.dd, dm: vals.dm,
     ws: vals.ws, wd: vals.wd, wm: vals.wm,
     cu: "Patrick Hung", ct: t0, ut: t0, at: at,
-    uu: "Patrick Hung", st: st, note: note, retry: 0,
+    uu: "Patrick Hung", st: st, brs: brs, note: note, retry: 0,
     pendingOp: isFeib ? "activate" : null,
     isNew: true
   };
@@ -1365,6 +1384,7 @@ $("addCreate").addEventListener("click", function () {
     return { f: FIELD_LABEL[k], from: "—", to: fmt(vals[k]) };
   });
   diff.push({ f: "Status", from: "—", to: st });
+  diff.push({ f: "Bank sync status", from: "—", to: brs });
   activityLog.unshift({
     actor: "Patrick Hung", action: "Created quota whitelist",
     target: currentUser.uid5 + " / " + currentUser.uid + " / " + cur + " / " + cust,
@@ -1376,48 +1396,53 @@ $("addCreate").addEventListener("click", function () {
   renderFiat();
   renderLog();
   showToast(isFeib
-    ? "已建立 " + currentUser.uid + " / " + cur + " / FAREAST，待當日 18:00 批次生效（PENDING ACTIVATION）"
-    : "已新增 " + currentUser.uid + " / " + cur + " / KGI，額度已生效（ACTIVATE）");
+    ? "已建立 " + currentUser.uid + " / " + cur + " / FAREAST（ACTIVATE），銀行同步狀態為 PENDING，待週五批次送檔"
+    : "已新增 " + currentUser.uid + " / " + cur + " / KGI，額度已生效（ACTIVATE / COMPLETED）");
 });
 
-// ================= FEIB 批次生效模擬（FR-OPS01-24、-25）=================
+// ================= FEIB 批次送檔模擬（FR-OPS01-24、-25）=================
+// 兩階段：PENDING →（11:00 產檔上傳 FTP）→ UPLOADED →（18:00 銀行處理完成）→ COMPLETED
 $("runBatch").addEventListener("click", function () {
-  // 批次對象＝待生效、待刪除，以及先前失敗待重送的資料（UPDATE FAILED 非終止狀態）
-  var batch = fiatRows.filter(function (r) {
-    return r.cust === "FAREAST" &&
-      (r.st === "PENDING ACTIVATION" || r.st === "PENDING DELETION" || r.st === "UPDATE FAILED");
-  });
-  if (!batch.length) { showToast("目前沒有待處理的 FEIB 資料"); return; }
+  var feib = function (brs) {
+    return fiatRows.filter(function (r) { return r.cust === "FAREAST" && r.brs === brs; });
+  };
+  var pending  = feib("PENDING");
+  var uploaded = feib("UPLOADED");
 
-  var fail = (simMode() === "feibFail");
-  var t0 = now2().slice(0, 11) + "18:00:00";
+  if (!pending.length && !uploaded.length) { showToast("目前沒有待送銀行的 FEIB 資料"); return; }
 
-  batch.forEach(function (r) {
-    // 保險：舊資料未帶 pendingOp 時，依當下狀態推回異動方向
-    if (!r.pendingOp) r.pendingOp = (r.st === "PENDING DELETION") ? "delete" : "activate";
-
-    if (fail) {
-      // 第一次失敗即轉 UPDATE FAILED（PRD FR-US01-40 第 1 點）
-      r.st = "UPDATE FAILED";
-      r.retry = (r.retry || 0) + 1;
-    } else if (r.pendingOp === "delete") {
-      r.st = "DELETED"; r.ut = t0; r.pendingOp = null;
-    } else {
-      r.st = "ACTIVATE"; r.at = t0; r.retry = 0; r.pendingOp = null;
+  // 階段一：產檔並上傳 FTP
+  if (pending.length) {
+    if (simMode() === "feibFail") {
+      pending.forEach(function (r) { r.retry = (r.retry || 0) + 1; });
+      renderFiat();
+      sendSlackAlert();
+      showToast("批次送檔失敗（第 " + batchFailCount + "/" + BATCH_TOTAL_ATTEMPTS + " 次）：" +
+                pending.length + " 筆維持 PENDING，待系統重試或 OP 於 Airflow 觸發；" +
+                "已發送 Slack 告警至 " + SLACK_CHANNEL, true);
+      return;
     }
+    var t1 = now2().slice(0, 11) + "11:00:00";
+    pending.forEach(function (r) { r.brs = "UPLOADED"; r.ut = t1; r.retry = 0; });
+    batchFailCount = 0;
+    renderFiat();
+    showToast(pending.length + " 筆已產檔並上傳至銀行 FTP（UPLOADED），待銀行處理");
+    return;
+  }
+
+  // 階段二：銀行處理完成
+  var t2 = now2().slice(0, 11) + "18:00:00";
+  uploaded.forEach(function (r) {
+    if (!r.pendingOp) r.pendingOp = (r.st === "DELETED") ? "delete" : "activate";
+    r.brs = "COMPLETED";
+    if (r.pendingOp === "activate") { r.at = t2; }
+    r.ut = t2;
+    r.pendingOp = null;
   });
   renderFiat();
-  if (fail) {
-    sendSlackAlert();
-    showToast("批次更新失敗（第 " + batchFailCount + "/" + BATCH_TOTAL_ATTEMPTS + " 次）：" +
-              batch.length + " 筆轉為 UPDATE FAILED，待系統重試或 OP 於 Airflow 觸發；" +
-              "已發送 Slack 告警至 " + SLACK_CHANNEL, true);
-  } else {
-    batchFailCount = 0;
-    var nA = batch.filter(function (r) { return r.st === "ACTIVATE"; }).length;
-    var nD = batch.filter(function (r) { return r.st === "DELETED"; }).length;
-    showToast(nA + " 筆已生效（ACTIVATE）、" + nD + " 筆已刪除（DELETED）；通知信待人員手動觸發");
-  }
+  var nA = uploaded.filter(function (r) { return r.st === "ACTIVATE"; }).length;
+  var nD = uploaded.filter(function (r) { return r.st === "DELETED"; }).length;
+  showToast("銀行已同步完成（COMPLETED）：新增 " + nA + " 筆、刪除 " + nD + " 筆；通知信待人員手動觸發");
 });
 
 // ================= Demo UID 面板（原型專用）=================
@@ -1431,7 +1456,7 @@ function freeCombos(uid5) {
   Object.keys(u.open).forEach(function (c) {
     u.open[c].forEach(function (cur) {
       var taken = fiatRows.some(function (r) {
-        return r.uid5 === uid5 && r.cust === c && r.cur === cur && r.st !== "DELETED";
+        return r.uid5 === uid5 && r.cust === c && r.cur === cur && isLive(r);
       });
       if (!taken) free.push(c + " " + cur);
     });
@@ -1474,14 +1499,13 @@ document.getElementById("fiatBody").addEventListener("click", function (e) {
   var tds = tr.querySelectorAll("td");
   var uid5 = tds[0].textContent.trim(), cur = tds[4].textContent.trim(), cust = tds[5].textContent.trim();
   var row = fiatRows.filter(function (r) {
-    return r.uid5 === uid5 && r.cur === cur && r.cust === cust && r.st !== "DELETED";
+    return r.uid5 === uid5 && r.cur === cur && r.cust === cust && r.st === "ACTIVATE";
   })[0];
   if (!row) return;
 
   // 等級變更提示（FR-OPS01-49）
   var others = fiatRows.filter(function (r) {
-    return r.uid5 === uid5 && !(r.cur === cur && r.cust === cust) &&
-           r.st !== "DELETED" && r.st !== "PENDING DELETION";
+    return r.uid5 === uid5 && !(r.cur === cur && r.cust === cust) && isLive(r);
   });
   var msg = others.length
     ? "The user's member level will remain Premium because a custom limit still exists for " +
@@ -1490,23 +1514,27 @@ document.getElementById("fiatBody").addEventListener("click", function (e) {
   if (!W_confirm(msg)) return;
 
   var t0 = now2();
+  var brsFrom = row.brs;
   if (row.cust === "FAREAST") {
-    // FEIB：非同步，先進入 PENDING DELETION（PRD FR-US01-08）
-    row.st = "PENDING DELETION"; row.pendingOp = "delete"; row.ut = t0;
-    showToast("已送出刪除，待週五批次處理後生效（PENDING DELETION）");
+    // FEIB：非同步。CMS 端即為 DELETED，銀行端待週五批次送檔
+    row.st = "DELETED"; row.brs = "PENDING"; row.pendingOp = "delete"; row.ut = t0;
+    showToast("已刪除（DELETED），銀行同步狀態回到 PENDING，待週五批次送檔");
   } else {
     // KGI：同步呼叫，失敗則完全不變更
     if (!callKgiApi().ok) {
       showToast("Failed to sync with KGI. The user's quota remains unchanged. Please try again later.", true);
       return;
     }
-    row.st = "DELETED"; row.ut = t0;
+    row.st = "DELETED"; row.brs = "COMPLETED"; row.ut = t0;
     showToast("已刪除 " + row.uid + " / " + row.cur + " / KGI，額度降回系統預設");
   }
   activityLog.unshift({
     actor: "Patrick Hung", action: "Deleted quota whitelist",
     target: row.uid5 + " / " + row.uid + " / " + row.cur + " / " + row.cust,
-    time: t0, diff: [{ f: "Status", from: "ACTIVATE", to: row.st }]
+    time: t0, diff: [
+      { f: "Status", from: "ACTIVATE", to: row.st },
+      { f: "Bank sync status", from: brsFrom, to: row.brs }
+    ]
   });
   renderFiat(); renderLog();
 });
@@ -1549,6 +1577,7 @@ function applyMode(m) {
   ALLOWED_KYC  = c.allowedKyc;
   EDITABLE     = c.editable;
   fiatRows     = clone(c.rows);
+  fiatRows.forEach(function (r) { if (!r.brs) r.brs = "COMPLETED"; });
   batchFailCount = 0;
   activityLog  = clone(c.log);
 

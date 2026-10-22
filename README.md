@@ -2,7 +2,9 @@
 
 XREX Exchange 後台 `[Admin] Deposit Withdraw Quota Management` 的靜態原型，供 PM / 工程 / 風控 review 用。
 
-對應 PRD：`deposit-withdraw-quota-PRD.md` v3.9。
+對應 PRD：`deposit-withdraw-quota-PRD.md` v4.6。
+
+> 原型先行：`Status` 拆為 `Status` + `Bank sync status` 兩欄的設計尚未寫入 PRD（PRD 仍為五態 Status），待 PRD 同步。
 
 ## 兩種模式
 
@@ -26,11 +28,12 @@ XREX Exchange 後台 `[Admin] Deposit Withdraw Quota Management` 的靜態原型
 
 - **Add whitelist（引導式）** — 輸入 `UID` 帶出 `Account Type`、`KYC Level` 與已開啟的 custodian／幣別；選定 custodian + currency 後依矩陣帶出 6 個額度值
 - **上限矩陣** — 依 Account Type × KYC level × Custodian × Currency × 交易方向取值；個人戶與企業戶為兩套數值
-- **五態 Status** — `ACTIVATE` / `PENDING ACTIVATION` / `PENDING DELETION` / `UPDATE FAILED` / `DELETED`，後三者僅 FEIB
-- **FEIB 週五批次** — 新增與刪除皆為非同步；失敗即轉 `UPDATE FAILED`（待重送，非終止），重送成功依異動方向轉 `ACTIVATE` / `DELETED`
+- **Status + Bank sync status 兩欄** — `Status` 為 XREX 端設定結果，僅 `ACTIVATE` / `DELETED`；`Bank sync status` 表示銀行是否已收到並處理：`PENDING`（尚未送出）/ `UPLOADED`（已上傳 FTP，待銀行處理）/ `COMPLETED`（銀行已處理完成）。KGI 為同步通路，成功即 `COMPLETED`
+- **FEIB 週五批次（兩階段）** — 新增與刪除在 CMS 端立即生效，`Bank sync status` 為 `PENDING`；11:00 產檔上傳 FTP → `UPLOADED`，18:00 銀行處理完成 → `COMPLETED`。送檔失敗時維持 `PENDING` 並累計重試次數，待下一次批次自動重新納入
+- **名額佔用** — `DELETED` 且 `COMPLETED` 才釋出該 custodian × currency 的名額；銀行尚未完成刪除前不可重新新增
 - **Slack 告警** — 批次失敗時產生 `alert-fiat-feib-prod` 訊息（含 `failCount` 與固定 `retryPolicy`），存於 `window.slackLog`
 - **Delete** — 僅在該用戶 KYC level 已降為 `Basic` 時可用；依通路分流，並顯示等級變更確認文案
-- **篩選** — ID 搜尋（類別 + 關鍵字）、Account Type、KYC Level、Currency、Custodian、Status、時間欄位 + 區間、Reset
+- **篩選** — ID 搜尋（類別 + 關鍵字）、Account Type、KYC Level、Currency、Custodian、Status、Bank sync、時間欄位 + 區間、Reset
 - **Activity Log** — 標題右側 icon 開啟右側 drawer，含 `Field / From / To` 差異表
 - **權限切換** — `view` / `edit`
 
@@ -42,7 +45,7 @@ topbar 右側區塊在正式版整區移除：
 | --- | --- |
 | 模式 | 新版（僅尊榮）／原版（含大型企業） |
 | 模擬結果 | 正常／KGI API 失敗／FEIB 批次失敗 |
-| 模擬週五批次 | 推進 FEIB 的待處理與待重送資料 |
+| 模擬週五批次（送檔→銀行完成） | 每按一次推進一階段：`PENDING` → `UPLOADED` → `COMPLETED` |
 | Demo UIDs | 示範帳號名冊，含「尚可新增」欄位；點任一列直接開啟 Add whitelist |
 
 ## 已知的刻意設定
